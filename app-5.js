@@ -98,6 +98,12 @@ renderChips(); renderResults(); renderQueue(); renderGuide(); renderBarcodeManag
 if (location.hash === '#queue') switchView('queueView');
 else if (location.hash === '#guide') switchView('guideView');
 
+// Load the optional local Code 128 PLU display after the core app is ready.
+const pluBarcodeScript = document.createElement('script');
+pluBarcodeScript.src = './app-6.js';
+pluBarcodeScript.defer = true;
+document.head.appendChild(pluBarcodeScript);
+
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js', { scope: './' }).catch(() => {}));
 }
