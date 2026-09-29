@@ -1,127 +1,67 @@
-# Produce CVP Helper
+# Produce PLU Helper
 
-A mobile-first personal helper for quickly identifying produce, finding the correct **PLU code**, confirming whether the item is entered by **KG** or **EA**, and staging a CVP queue before using the official Walmart handheld workflow.
+An independent, mobile-first helper for identifying produce, looking up PLU codes, confirming whether an item is handled by weight (`KG`) or count (`EA`), and staging a short personal lookup queue.
 
-> **Not a Walmart system.** This project does not connect to International Claims, pricing, inventory, label printing, employee accounts, or handheld APIs. It only helps with the manual lookup/identification step before the official device.
+## Independence / non-affiliation
 
-## Current data source
+This is a personal open-source utility. It is **not affiliated with, endorsed by, sponsored by, certified by, or connected to any retailer or employer**. It does not connect to employer systems, claims systems, inventory, pricing, authentication, label printers, or handheld APIs.
 
-Starter data was transcribed from the user-provided photo of **Dept. 94: PRODUCE PLU CHART — 2026 Q3 (NATIONAL)**.
+Do not add retailer logos, trademarks, employee credentials, store/location identifiers, customer information, internal screenshots, confidential documents, or private operational information to the public repository.
 
-- 211 chart rows.
-- Codes are stored as strings so leading-zero values such as `0434` and `0222` stay intact.
-- Duplicate PLUs visible on the photographed chart are intentionally preserved rather than guessed away.
+## Data caution
 
-The photographed sheet is a **PLU chart**, not a universal UPC list. PLUs and store procedures can change, so the current in-store chart remains the source of truth.
+PLU codes are industry identifiers used for loose produce. The International Federation for Produce Standards (IFPS) publishes globally used PLU codes and also documents retailer-assigned PLU ranges. Retailer-assigned mappings can differ between retailers.
 
-## Fast workflow
+This repository contains a manually curated lookup dataset. It may contain mistakes, outdated values, or retailer/local mappings. **Do not treat the repository as an authoritative source.** Verify any unusual or conflicting value against the current approved source for your workplace before using it operationally.
 
-1. Search/speak the produce name, nickname, or PLU.
-2. Confirm the exact product name and whether the chart says **KG** or **EA**.
-3. Add it to the queue.
-4. Repeat for all bags/items.
-5. Open **Rapid CVP** to work one item at a time with a large PLU, optional quantity, copy button, and **Done + Next**.
-6. Enter the information into the official handheld as normal.
+For a public deployment, the safest approach is:
 
-## Features
+- keep globally/publicly verifiable PLU data in the repository;
+- keep retailer-specific barcode or PLU mappings local to the browser/device;
+- never publish confidential workplace source documents or credentials;
+- do not imply that this project is an official workplace tool.
 
-### Lookup speed
-- Fast search by name, common alias, custom nickname, or PLU.
-- Fuzzy typo matching.
-- Useful aliases such as `cassava → YUCCA ROOT`, `mooli → DAIKON`, `karela → BITTER MELON`, `bhindi → OKRA`, `lauki/dudhi → OPO SQUASH`, and `dhania → CORIANDER/CILANTRO`.
-- Frequently used items float into a personal quick strip automatically.
-- Saved/favorite and recent filters.
-- One-tap PLU copy.
-- Read-aloud PLU for hands-busy situations.
+## Main features
 
-### Voice
-- Voice search when Web Speech Recognition is available.
-- Tries multiple recognition alternatives and picks the phrase that best matches the local produce dataset.
-- Supports simple commands such as `queue`, `guide`, and `add yucca`.
-- Voice is a convenience feature only; typed search always remains available because browser support varies.
+- Search by produce name, alias, PLU, or locally learned barcode.
+- Fuzzy typo matching and custom nicknames.
+- Voice search where the browser supports Web Speech Recognition.
+- Camera/barcode scanning where the browser supports the Barcode Detection API.
+- Exact barcode → produce/PLU mappings saved locally in the browser.
+- UPC-A / EAN-13 leading-zero equivalence handling.
+- Export/import of personal barcode mappings as JSON.
+- Optional local reference photos stored in IndexedDB.
+- Queue / rapid mode for one-item-at-a-time lookup.
+- PLU read-aloud.
+- Optional Code 128 rendering that encodes the PLU digits exactly.
+- Offline caching after a successful first load.
 
-### Camera
-- Live rear-camera mode via `getUserMedia()` on HTTPS-capable browsers.
-- Uses the browser's native `BarcodeDetector` when available.
-- An exact scanned 4–5 digit PLU opens the matching produce automatically.
-- Longer UPC/EAN/GTIN values first check an **exact barcode → product → PLU mapping**. If none exists, the app never guesses. You can confirm the product once and save the barcode mapping locally; future scans jump straight to that PLU.
-- Photo barcode scan fallback where `BarcodeDetector` supports image detection.
-- Mystery-item photo capture lets you keep a photo visible while comparing the Visual Guide.
+## Barcode safety
 
-### PLU → scannable barcode
-- Every produce detail screen and Rapid CVP screen can render the exact PLU digits as a **Code 128** barcode for faster scanning into a compatible handheld input field.
-- The generated barcode contains only the PLU text (for example, `4819`). It is **not a UPC** and is not a Walmart-issued label.
-- Barcode scanner/app acceptance can depend on the official handheld configuration, so test one known item before relying on this shortcut. Typing/copying the PLU remains the fallback.
-- Barcode rendering is generated locally with no CDN or external service, so it remains available offline.
+The app never guesses a PLU by chopping digits off a longer UPC/EAN/GTIN. Unknown barcodes require a one-time human confirmation before a mapping is stored.
 
-### Barcode → PLU memory
-- Exact barcode mappings are supported for UPC/EAN/GTIN or any scanner-readable value.
-- Unknown sticker barcode → choose the confirmed produce once → save mapping.
-- Future scans of that exact barcode open the product and its PLU immediately.
-- UPC-A 12-digit and equivalent EAN-13 leading-zero representations are treated as the same scanner value.
-- Mappings target the exact produce record (not just a PLU), which matters when the chart has duplicate PLUs.
-- Local mappings can be exported/imported as JSON for backup or transfer to another device.
-- `data/barcodes.js` is reserved for built-in mappings that have been independently verified before being committed.
-- The app never derives a PLU by chopping digits off an unknown barcode.
+The generated Code 128 image simply encodes the displayed PLU digits. It is **not** a UPC, GS1 identifier, retailer-issued label, or replacement for an official barcode. Whether a workplace scanner accepts such a Code 128 value depends on that scanner and software configuration; test only in accordance with workplace policy.
 
-### Reliable visual identification aid
-- Visual descriptions for commonly confused/unlabelled items.
-- User can save a **reference photo from their own store** after an item is confirmed once.
-- Reference photos are downscaled and stored locally in IndexedDB on that browser/device; they are not uploaded to GitHub.
-- Saved reference photos replace emojis in relevant lookup/guide cards, creating a personalized store-specific visual guide over time.
+## Browser limitations
 
-### Queue / rapid CVP
-- Queue stores optional kg/piece quantity.
-- Repeated adds of the same unfinished produce record increment a staged-bag count instead of making cluttered duplicates.
-- Rapid CVP gives one item at a time, giant PLU, KG/EA, quantity, Copy, Read, Previous/Next, and Done + Next.
-- Requests a screen wake lock during Rapid CVP on browsers that support it.
-- Copy queue summary for troubleshooting or temporary notes.
+Camera and voice functions are progressive enhancements. Browser support varies. Typed search is the primary fallback.
 
-### Reliability safeguards
-- Duplicate PLUs from the source chart trigger a warning listing the other product names using that code.
-- Leading-zero PLUs remain intact.
-- Camera scanner auto-opens an exact local PLU or an exact saved/verified barcode mapping.
-- The app never invents a mapping from a long UPC/EAN/GTIN barcode to a PLU.
-- Store data can change; the current store chart remains the final authority.
+Core data, aliases, queue state, favorites, usage history, and learned barcode mappings are stored locally in browser storage. Reference photos are stored locally in IndexedDB.
 
-### Privacy / static hosting
-- No backend, login, Walmart credential, store number, employee ID, customer information, or API key is required.
-- Queue, saved items, usage history, aliases, recents and learned barcode mappings stay in browser local storage.
-- Reference photos stay in browser IndexedDB.
-- Suitable for static GitHub Pages hosting.
+## GitHub Pages
 
-## GitHub Pages deployment
+This is a static site and can be published from the repository root:
 
-The project is intentionally build-free. Put these files at the repository root, then in GitHub:
+1. Open **Settings → Pages**.
+2. Under **Build and deployment**, select **Deploy from a branch**.
+3. Choose `main` and `/ (root)`.
+4. Save and wait for the Pages deployment to complete.
 
-1. **Settings → Pages**.
-2. Choose **Deploy from a branch**.
-3. Select the default branch (normally `main`) and `/ (root)`.
-4. Save and wait for the Pages URL.
-5. Open it once in Safari and use **Share → Add to Home Screen**.
+The camera API requires a secure context; GitHub Pages uses HTTPS.
 
-GitHub Pages serves over HTTPS, which is required by browser camera APIs.
+## Privacy
 
-### Important visibility note
-
-A private source repository does not automatically mean the published website is private. GitHub Pages access control for a privately published site is an Enterprise Cloud feature. Treat the deployed URL/content as potentially public unless your GitHub Pages settings explicitly say the site is private. Do not put Walmart credentials, internal secrets, customer data, or non-public operational information in this repository/site.
-
-## Offline behavior
-
-The service worker caches the core app/data after a successful load. Typed lookup, saved aliases, queue, and local reference photos can continue to work without a network connection. Voice recognition and some camera/barcode features may still depend on browser/device support and may not work offline.
-
-## Why there is no automatic AI produce recognition
-
-A static GitHub Pages site can run a generic image model in the browser, but general-purpose classifiers are not reliable enough to distinguish many look-alike roots, gourds and leafy vegetables for a workflow that can affect claims. A cloud vision model would also require an API/service and may expose photos or secrets.
-
-Instead, this version uses a safer combination:
-
-- camera for sticker/barcode reading when supported,
-- a visual guide,
-- a side-by-side mystery photo,
-- and store-specific reference photos saved after a human confirms the item once.
-
-This is intentionally designed to be useful without pretending an uncertain AI guess is authoritative.
+No sign-in, employee ID, store number, workplace credentials, or customer data are required by the app. Do not commit such information to this repository.
 
 ## Run locally
 
@@ -131,16 +71,13 @@ python3 -m http.server 8080
 
 Open `http://localhost:8080`.
 
-## Updating the produce chart
+## Updating data
 
-The dataset is split across `data/produce-meta.js` and `data/produce-1.js` through `data/produce-4.js`. See `docs/DATA_NOTES.md` before editing.
+When updating produce data:
 
-When a new quarterly chart is available:
-
-1. Keep a copy of the old dataset.
-2. Transcribe the new chart carefully.
-3. Preserve exact PLU formatting, including leading zeros.
-4. Compare additions, removals, renamed products and KG/EA changes.
-5. Re-check duplicate PLUs instead of automatically deduplicating.
-6. Update `meta.version` in `data/produce-meta.js`.
-7. Bump the cache name in `sw.js` so installed devices refresh.
+1. Prefer publicly verifiable industry PLU information.
+2. Preserve exact PLU formatting, including leading zeros.
+3. Re-check product name and `KG` / `EA` handling.
+4. Treat duplicate codes as a reason to verify, not something to silently deduplicate.
+5. Keep retailer-specific mappings local rather than committing them publicly unless you have authorization to publish them.
+6. Run the validation workflow before deploying.
