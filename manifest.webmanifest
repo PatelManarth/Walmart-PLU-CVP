@@ -1,34 +1,18 @@
 {
-  "name": "Produce CVP Helper",
-  "short_name": "Produce CVP",
-  "description": "Fast personal produce PLU lookup and CVP preparation helper.",
+  "name": "Produce PLU Helper",
+  "short_name": "Produce PLU",
+  "description": "Independent personal produce PLU lookup and staging helper.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f5f8f6",
   "theme_color": "#0b6b3a",
-  "categories": [
-    "productivity",
-    "utilities"
-  ],
+  "categories": ["productivity", "utilities"],
   "shortcuts": [
-    {
-      "name": "Lookup produce",
-      "short_name": "Lookup",
-      "url": "./"
-    },
-    {
-      "name": "CVP queue",
-      "short_name": "Queue",
-      "url": "./#queue"
-    }
+    {"name": "Lookup produce", "short_name": "Lookup", "url": "./"},
+    {"name": "PLU queue", "short_name": "Queue", "url": "./#queue"}
   ],
   "icons": [
-    {
-      "src": "assets/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
+    {"src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}
   ]
 }
