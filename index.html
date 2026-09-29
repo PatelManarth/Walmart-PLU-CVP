@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b6b3a" />
+  <meta name="description" content="Fast personal produce PLU lookup and CVP prep helper." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Produce CVP" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Produce CVP Helper</title>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">Dept. 94 • Q3 2026 • personal helper</div>
+        <h1>Produce CVP</h1>
+      </div>
+      <div class="top-actions">
+        <button id="openCamera" class="icon-btn" type="button" aria-label="Camera assist" title="Camera assist">📷</button>
+        <button id="openAbout" class="icon-btn" type="button" aria-label="About this app">ⓘ</button>
+      </div>
+    </header>
+
+    <main>
+      <section id="lookupView" class="view active" aria-labelledby="lookupTab">
+        <div class="search-wrap sticky-search">
+          <div class="search-row">
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <input id="searchInput" type="search" inputmode="search" autocomplete="off" autocapitalize="none" spellcheck="false"
+              placeholder="Name, alias, PLU or mapped barcode…" aria-label="Search produce" />
+            <button id="clearSearch" class="search-action hidden" type="button" aria-label="Clear search">×</button>
+            <button id="voiceSearch" class="search-action" type="button" aria-label="Voice search" title="Voice search">🎙️</button>
+          </div>
+          <div class="search-hint">Say or type <button class="text-chip quick-search" data-query="yucca">yucca</button>, <button class="text-chip quick-search" data-query="cassava">cassava</button>, <button class="text-chip quick-search" data-query="4819">4819</button> or <button class="text-chip quick-search" data-query="mooli">mooli</button>.</div>
+        </div>
+
+        <div class="hero-card">
+          <div>
+            <span class="kicker">Fast path</span>
+            <h2>Identify → confirm KG/EA → use PLU</h2>
+            <p>Built for the step before the Walmart handheld. This app never submits claims or prints labels.</p>
+          </div>
+          <div class="hero-actions">
+            <button id="openVisualGuide" class="secondary-btn" type="button">🧭 I don’t know what it is</button>
+            <button id="openCameraHero" class="secondary-btn" type="button">📷 Camera / sticker scan</button>
+          </div>
+        </div>
+
+        <div id="frequentStrip" class="frequent-strip hidden"></div>
+
+        <div class="section-head">
+          <div>
+            <h2 id="resultTitle">Quick picks</h2>
+            <p id="resultMeta">Common unlabeled / easy-to-confuse produce</p>
+          </div>
+          <button id="showAll" class="link-btn" type="button">Show all</button>
+        </div>
+
+        <div id="categoryChips" class="chip-row" aria-label="Produce filters"></div>
+        <div id="results" class="results-grid" aria-live="polite"></div>
+        <div id="emptyState" class="empty hidden">
+          <div class="empty-icon">🔎</div>
+          <h3>No match found</h3>
+          <p>Try another spelling, alias, or PLU. You can also teach the app a local nickname from any item’s detail screen.</p>
+        </div>
+      </section>
+
+      <section id="queueView" class="view" aria-labelledby="queueTab">
+        <div class="section-head queue-head">
+          <div>
+            <h2>CVP queue</h2>
+            <p>Stage items before entering them on the handheld.</p>
+          </div>
+          <button id="clearCompleted" class="link-btn" type="button">Clear done</button>
+        </div>
+
+        <div class="queue-toolbar">
+          <button id="startRapidMode" class="primary-btn" type="button">⚡ Start rapid CVP</button>
+          <button id="copyQueueSummary" class="outline-btn" type="button">Copy queue</button>
+        </div>
+
+        <div class="queue-tip">Tip: tap a PLU to copy it. Use Rapid CVP for one-item-at-a-time processing with a giant PLU and Done + Next.</div>
+        <div id="queueList" class="queue-list"></div>
+        <div id="queueEmpty" class="empty">
+          <div class="empty-icon">🧺</div>
+          <h3>Your queue is empty</h3>
+          <p>From Lookup, add each bag/item as you identify it.</p>
+          <button class="primary-btn goto-lookup" type="button">Find produce</button>
+        </div>
+      </section>
+
+      <section id="guideView" class="view" aria-labelledby="guideTab">
+        <div class="section-head">
+          <div>
+            <h2>Visual guide</h2>
+            <p>For produce with no sticker or obvious name.</p>
+          </div>
+        </div>
+
+        <div id="mysteryPhotoPanel" class="mystery-photo-panel hidden">
+          <img id="mysteryPhoto" alt="Mystery produce photo" />
+          <div>
+            <strong>Your mystery item</strong>
+            <p>Keep this photo open while comparing candidates below.</p>
+            <button id="clearMysteryPhoto" class="link-btn" type="button">Remove photo</button>
+          </div>
+        </div>
+
+        <div class="guide-note">
+          <strong>Appearance is a clue, not proof.</strong> Similar roots, gourds and greens can look alike. For a difficult item, save a reference photo from your own store after you confirm the name once.
+        </div>
+
+        <div class="guide-actions">
+          <label class="secondary-btn file-btn">📷 Take comparison photo<input id="mysteryCapture" type="file" accept="image/*" capture="environment" hidden /></label>
+          <button id="openCameraGuide" class="secondary-btn" type="button">▦ Scan sticker/barcode</button>
+        </div>
+
+        <div class="guide-controls">
+          <button class="guide-filter active" data-guide="all" type="button">All</button>
+          <button class="guide-filter" data-guide="roots" type="button">Roots</button>
+          <button class="guide-filter" data-guide="gourds" type="button">Gourds</button>
+          <button class="guide-filter" data-guide="greens" type="button">Greens</button>
+          <button class="guide-filter" data-guide="fruit" type="button">Fruit</button>
+        </div>
+        <div id="guideCards" class="guide-grid"></div>
+
+        <div class="barcode-manager">
+          <div class="section-head compact-head">
+            <div>
+              <span class="kicker">Barcode memory</span>
+              <h3>Barcode → PLU mappings</h3>
+              <p id="barcodeMappingCount">0 saved barcode mappings on this device</p>
+            </div>
+          </div>
+          <p class="muted">When a sticker scans as UPC/EAN/GTIN instead of a PLU, confirm the produce once and save it. Future scans of that exact barcode jump directly to the matching product and PLU.</p>
+          <div id="barcodeMappingList" class="mapping-list"></div>
+          <div class="mapping-actions">
+            <button id="exportBarcodeMappings" class="outline-btn" type="button">Export mappings</button>
+            <label class="outline-btn file-btn">Import mappings<input id="importBarcodeMappings" type="file" accept="application/json,.json" hidden /></label>
+            <button id="clearBarcodeMappings" class="link-btn danger-text" type="button">Clear local mappings</button>
+          </div>
+        </div>
+
+        <div class="install-card">
+          <div>
+            <span class="kicker">Use it like an app</span>
+            <h3>Add to Home Screen</h3>
+            <p>Open the GitHub Pages site in Safari → Share → <strong>Add to Home Screen</strong>. Core lookup, queue, saved aliases and reference-photo metadata work without a server.</p>
+          </div>
+          <div class="install-badge">📱</div>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Primary navigation">
+      <button id="lookupTab" class="nav-item active" data-view="lookupView" type="button"><span>⌕</span><span>Lookup</span></button>
+      <button id="queueTab" class="nav-item" data-view="queueView" type="button"><span class="queue-icon-wrap">🧺<b id="queueCount" class="count-badge hidden">0</b></span><span>Queue</span></button>
+      <button id="guideTab" class="nav-item" data-view="guideView" type="button"><span>◫</span><span>Guide</span></button>
+    </nav>
+  </div>
+
+  <dialog id="detailDialog" class="detail-dialog">
+    <button class="dialog-close" data-close-dialog type="button" aria-label="Close">×</button>
+    <div id="detailContent"></div>
+  </dialog>
+
+  <dialog id="cameraDialog" class="camera-dialog">
+    <button class="dialog-close" data-close-camera type="button" aria-label="Close">×</button>
+    <div class="camera-content">
+      <span class="kicker">Camera assist</span>
+      <h2>Sticker / barcode scan</h2>
+      <p class="muted">Best for produce that has a sticker. A direct 4–5 digit PLU opens immediately. Longer UPC/EAN/GTIN barcodes use only exact saved mappings — never a guessed conversion. Unknown barcodes can be mapped once to the confirmed product/PLU.</p>
+      <div class="camera-frame">
+        <video id="cameraVideo" playsinline muted></video>
+        <div class="scan-guide"></div>
+        <div id="cameraStatus" class="camera-status">Camera not started</div>
+      </div>
+      <div class="camera-actions">
+        <button id="startCamera" class="primary-btn" type="button">Start live scan</button>
+        <button id="stopCamera" class="outline-btn" type="button">Stop</button>
+        <label class="outline-btn file-btn">Use photo<input id="barcodePhoto" type="file" accept="image/*" capture="environment" hidden /></label>
+      </div>
+      <div class="manual-barcode-row">
+        <input id="manualBarcode" type="text" inputmode="numeric" autocomplete="off" placeholder="Or type/paste barcode" aria-label="Barcode number" />
+        <button id="manualBarcodeGo" class="outline-btn" type="button">Lookup</button>
+      </div>
+      <div id="scanResult" class="scan-result hidden"></div>
+      <div class="camera-fallback">
+        <strong>No auto-detection?</strong>
+        <p>That is normal on some iPhone/Safari versions. Use the camera to take a comparison photo, then use the Visual Guide or search by what you can read on the sticker.</p>
+        <label class="secondary-btn file-btn">📷 Take mystery-item photo<input id="cameraMysteryCapture" type="file" accept="image/*" capture="environment" hidden /></label>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="barcodeMapDialog" class="barcode-map-dialog">
+    <button class="dialog-close" data-close-barcode-map type="button" aria-label="Close">×</button>
+    <div class="barcode-map-content">
+      <span class="kicker">One-time confirmation</span>
+      <h2>Map barcode → PLU</h2>
+      <p>Scanned barcode: <strong id="mapBarcodeValue"></strong></p>
+      <p class="muted">Find the correct produce by name, alias, or PLU. The app saves an exact local mapping — it does not infer one.</p>
+      <input id="mapSearch" class="map-search" type="search" autocomplete="off" placeholder="Search e.g. yucca, cassava, 4819" aria-label="Find product for barcode" />
+      <div id="mapResults" class="map-results"></div>
+    </div>
+  </dialog>
+
+  <dialog id="rapidDialog" class="rapid-dialog">
+    <button class="dialog-close" data-close-rapid type="button" aria-label="Close">×</button>
+    <div id="rapidContent" class="rapid-content"></div>
+  </dialog>
+
+  <dialog id="aboutDialog" class="about-dialog">
+    <button class="dialog-close" data-close-about type="button" aria-label="Close">×</button>
+    <div class="about-content">
+      <span class="kicker">About</span>
+      <h2>Produce CVP Helper</h2>
+      <p>This is a personal lookup/prep tool. It does not connect to Walmart systems, the handheld/Telxon, International Claims, pricing, inventory, or label printing.</p>
+      <div id="dataVersion" class="data-version"></div>
+      <p><strong>Important:</strong> the photographed document is a <em>PLU</em> chart, not a universal UPC list. Store data can change. Verify unusual or conflicting codes against the current store chart.</p>
+      <p>Voice and camera features are progressive enhancements. Voice recognition and browser barcode detection are not supported equally by every browser, so normal typed search always remains the reliable fallback.</p>
+      <p>No sign-in, store number, employee ID or credentials are stored. Favorites, recents, aliases, queue data and learned barcode mappings stay in this browser. Reference photos are saved only in this browser’s local IndexedDB. Barcode mappings can be exported/imported as JSON for backup.</p>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="data/produce-meta.js"></script>
+  <script src="data/produce-1.js"></script>
+  <script src="data/produce-2.js"></script>
+  <script src="data/produce-3.js"></script>
+  <script src="data/produce-4.js"></script>
+  <script src="data/barcodes.js"></script>
+  <script src="app-1.js"></script>
+  <script src="app-2.js"></script>
+  <script src="app-3.js"></script>
+  <script src="app-4.js"></script>
+  <script src="app-5.js"></script>
+</body>
+</html>
