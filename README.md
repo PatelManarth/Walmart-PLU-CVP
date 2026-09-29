@@ -48,6 +48,12 @@ The photographed sheet is a **PLU chart**, not a universal UPC list. PLUs and st
 - Photo barcode scan fallback where `BarcodeDetector` supports image detection.
 - Mystery-item photo capture lets you keep a photo visible while comparing the Visual Guide.
 
+### PLU → scannable barcode
+- Every produce detail screen and Rapid CVP screen can render the exact PLU digits as a **Code 128** barcode for faster scanning into a compatible handheld input field.
+- The generated barcode contains only the PLU text (for example, `4819`). It is **not a UPC** and is not a Walmart-issued label.
+- Barcode scanner/app acceptance can depend on the official handheld configuration, so test one known item before relying on this shortcut. Typing/copying the PLU remains the fallback.
+- Barcode rendering is generated locally with no CDN or external service, so it remains available offline.
+
 ### Barcode → PLU memory
 - Exact barcode mappings are supported for UPC/EAN/GTIN or any scanner-readable value.
 - Unknown sticker barcode → choose the confirmed produce once → save mapping.
@@ -127,7 +133,7 @@ Open `http://localhost:8080`.
 
 ## Updating the produce chart
 
-The dataset lives in `data/produce.js`. See `docs/DATA_NOTES.md` before editing.
+The dataset is split across `data/produce-meta.js` and `data/produce-1.js` through `data/produce-4.js`. See `docs/DATA_NOTES.md` before editing.
 
 When a new quarterly chart is available:
 
@@ -136,5 +142,5 @@ When a new quarterly chart is available:
 3. Preserve exact PLU formatting, including leading zeros.
 4. Compare additions, removals, renamed products and KG/EA changes.
 5. Re-check duplicate PLUs instead of automatically deduplicating.
-6. Update `meta.version` in `data/produce.js`.
+6. Update `meta.version` in `data/produce-meta.js`.
 7. Bump the cache name in `sw.js` so installed devices refresh.
