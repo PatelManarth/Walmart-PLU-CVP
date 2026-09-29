@@ -4,22 +4,22 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0b6b3a" />
-  <meta name="description" content="Fast personal produce PLU lookup and CVP prep helper." />
+  <meta name="description" content="Fast personal produce PLU lookup and staging helper." />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="Produce CVP" />
+  <meta name="apple-mobile-web-app-title" content="Produce PLU" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="assets/icon.svg" />
   <link rel="stylesheet" href="styles.css" />
-  <title>Produce CVP Helper</title>
+  <title>Produce PLU Helper</title>
 </head>
 <body>
   <div class="app-shell">
     <header class="topbar">
       <div>
-        <div class="eyebrow">Dept. 94 • Q3 2026 • personal helper</div>
-        <h1>Produce CVP</h1>
+        <div class="eyebrow">Personal produce lookup • independent helper</div>
+        <h1>Produce PLU</h1>
       </div>
       <div class="top-actions">
         <button id="openCamera" class="icon-btn" type="button" aria-label="Camera assist" title="Camera assist">📷</button>
@@ -44,7 +44,7 @@
           <div>
             <span class="kicker">Fast path</span>
             <h2>Identify → confirm KG/EA → use PLU</h2>
-            <p>Built for the step before the Walmart handheld. This app never submits claims or prints labels.</p>
+            <p>Built for the manual lookup step before an approved workplace workflow. This app does not submit claims, change inventory, or print labels.</p>
           </div>
           <div class="hero-actions">
             <button id="openVisualGuide" class="secondary-btn" type="button">🧭 I don’t know what it is</button>
@@ -74,18 +74,18 @@
       <section id="queueView" class="view" aria-labelledby="queueTab">
         <div class="section-head queue-head">
           <div>
-            <h2>CVP queue</h2>
+            <h2>PLU queue</h2>
             <p>Stage items before entering them on the handheld.</p>
           </div>
           <button id="clearCompleted" class="link-btn" type="button">Clear done</button>
         </div>
 
         <div class="queue-toolbar">
-          <button id="startRapidMode" class="primary-btn" type="button">⚡ Start rapid CVP</button>
+          <button id="startRapidMode" class="primary-btn" type="button">⚡ Start rapid mode</button>
           <button id="copyQueueSummary" class="outline-btn" type="button">Copy queue</button>
         </div>
 
-        <div class="queue-tip">Tip: tap a PLU to copy it. Use Rapid CVP for one-item-at-a-time processing with a giant PLU and Done + Next.</div>
+        <div class="queue-tip">Tip: tap a PLU to copy it. Use Rapid mode for one-item-at-a-time processing with a giant PLU and Done + Next.</div>
         <div id="queueList" class="queue-list"></div>
         <div id="queueEmpty" class="empty">
           <div class="empty-icon">🧺</div>
@@ -113,7 +113,7 @@
         </div>
 
         <div class="guide-note">
-          <strong>Appearance is a clue, not proof.</strong> Similar roots, gourds and greens can look alike. For a difficult item, save a reference photo from your own store after you confirm the name once.
+          <strong>Appearance is a clue, not proof.</strong> Similar roots, gourds and greens can look alike. For a difficult item, save a reference photo from your own workplace after you confirm the name once.
         </div>
 
         <div class="guide-actions">
@@ -220,12 +220,12 @@
     <button class="dialog-close" data-close-about type="button" aria-label="Close">×</button>
     <div class="about-content">
       <span class="kicker">About</span>
-      <h2>Produce CVP Helper</h2>
-      <p>This is a personal lookup/prep tool. It does not connect to Walmart systems, the handheld/Telxon, International Claims, pricing, inventory, or label printing.</p>
+      <h2>Produce PLU Helper</h2>
+      <p>This is an independent personal lookup/prep tool. It is not affiliated with, endorsed by, sponsored by, or connected to any retailer. It does not connect to employer systems, handhelds, claims, pricing, inventory, or label printing.</p>
       <div id="dataVersion" class="data-version"></div>
-      <p><strong>Important:</strong> the photographed document is a <em>PLU</em> chart, not a universal UPC list. Store data can change. Verify unusual or conflicting codes against the current store chart.</p>
+      <p><strong>Important:</strong> this is a manually curated PLU reference. Some values may be retailer-assigned, local, outdated, or entered incorrectly. Verify unusual or conflicting codes against your current approved workplace source before operational use.</p>
       <p>Voice and camera features are progressive enhancements. Voice recognition and browser barcode detection are not supported equally by every browser, so normal typed search always remains the reliable fallback.</p>
-      <p>No sign-in, store number, employee ID or credentials are stored. Favorites, recents, aliases, queue data and learned barcode mappings stay in this browser. Reference photos are saved only in this browser’s local IndexedDB. Barcode mappings can be exported/imported as JSON for backup.</p>
+      <p>No sign-in, workplace location, employee ID, or credentials are stored. Favorites, recents, aliases, queue data and learned barcode mappings stay in this browser. Reference photos are saved only in this browser’s local IndexedDB. Barcode mappings can be exported/imported as JSON for backup.</p>
     </div>
   </dialog>
 
@@ -242,5 +242,6 @@
   <script src="app-3.js"></script>
   <script src="app-4.js"></script>
   <script src="app-5.js"></script>
+  <script src="app-6.js"></script>
 </body>
 </html>
