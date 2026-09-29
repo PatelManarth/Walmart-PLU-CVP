@@ -1,0 +1,1 @@
+window.PRODUCE_DATA = {"meta":{"title":"Dept. 94 Produce PLU Chart","version":"2026 Q3 (National)","source":"User-provided Walmart Dept. 94 Produce PLU Chart photos","note":"Codes are transcribed from the photographed chart. Verify against the current store chart when a code or product looks unusual."},"items":[]};
