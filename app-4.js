@@ -37,7 +37,7 @@ function rankVoiceAlternatives(result) {
   let best = alternatives[0] || '';
   let bestScore = -Infinity;
   for (const phrase of alternatives) {
-    const score = Math.max(...ITEMS.map(item => searchScore(item, phrase)));
+    const score = Math.max(...CATALOG_ITEMS.map(item => searchScore(item, phrase)));
     if (score > bestScore) { bestScore = score; best = phrase; }
   }
   return best;
@@ -204,6 +204,18 @@ function handleScannedCode(raw) {
   if (exact.length > 1) {
     $('#scanResult').innerHTML = `<strong>PLU ${esc(value)} has ${exact.length} chart matches:</strong> ${exact.map(x => esc(x.name)).join(' • ')}. Search the PLU and confirm the product name.`;
     stopCamera(); setSearch(value); $('#cameraDialog').close();
+    return;
+  }
+
+  const packaged = resolvePackagedBarcode(value);
+  if (packaged) {
+    const unit = addPackagedUnit(packaged.item.id);
+    $('#scanResult').innerHTML = `<strong>Packaged product matched:</strong><br>${esc(packaged.item.name)}<br><strong>UPC ${esc(packaged.item.barcode)}</strong><br><span class="muted">${esc(unit.bagId)} added to READY. Confirm the package name/size on the physical item.</span>`;
+    stopCamera(); haptic(30);
+    setTimeout(() => {
+      if ($('#cameraDialog').open) $('#cameraDialog').close();
+      openPackagedDetail(packaged.item, unit);
+    }, 500);
     return;
   }
 
