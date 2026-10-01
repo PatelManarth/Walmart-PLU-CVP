@@ -19,8 +19,10 @@ jobs:
         with:
           python-version: '3.12'
       - name: Validate JavaScript syntax
-        run: node --check app-1.js && node --check app-2.js && node --check app-3.js && node --check app-4.js && node --check app-5.js && node --check app-6.js && node --check sw.js
+        run: node --check app-1.js && node --check app-2.js && node --check app-3.js && node --check app-4.js && node --check app-5.js && node --check app-6.js && node --check sw.js && node --check data/produce-i18n.js && node --check data/packaged-products.js
       - name: Validate produce dataset
         run: python tests/test_data.py
+      - name: Validate packaged and multilingual catalogs
+        run: node tests/test_catalog.js
       - name: Validate manifest JSON
         run: python -m json.tool manifest.webmanifest >/dev/null
