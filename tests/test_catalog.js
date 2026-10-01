@@ -25,6 +25,24 @@ for (const lang of ['esCO','esES','esUS','fr','hi','gu','fil']) {
   }
 }
 
+function norm(s) {
+  return String(s ?? '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^\p{L}\p{N}\p{M}]+/gu,' ').trim();
+}
+function ruleMatchesItem(rule, item) {
+  const haystack = norm([item.name, ...(item.aliases || [])].join(' '));
+  const padded = ` ${haystack} `;
+  const has = term => {
+    const p = norm(term);
+    return !!p && padded.includes(` ${p} `);
+  };
+  if ((rule.exclude || []).some(has)) return false;
+  return (rule.match || []).some(has);
+}
+const uncovered = window.PRODUCE_DATA.items.filter(item => !window.PRODUCE_I18N_RULES.some(rule => ruleMatchesItem(rule,item)));
+if (uncovered.length) {
+  throw new Error(`Produce items without multilingual aliases: ${uncovered.map(x => x.name).join(', ')}`);
+}
+
 const appleRule = window.PRODUCE_I18N_RULES.find(r => r.match?.includes('apple'));
 if (!appleRule?.names?.esCO?.includes('manzana')) throw new Error('Spanish apple alias missing');
 if (!appleRule?.names?.fr?.includes('pomme')) throw new Error('French apple alias missing');
