@@ -268,12 +268,16 @@ function bumpUsage(id) {
 
 function speakCode(item) {
   if (!('speechSynthesis' in window)) { toast('Read-aloud is unavailable'); return; }
-  const digits = item.plu.split('').join(' ');
-  const unit = item.unit === 'KG' ? 'kilograms' : 'each';
+  const packaged = item?.type === 'packaged';
+  const code = packaged ? String(item.barcode || '') : String(item.plu || '');
+  const digits = code.split('').join(' ');
+  const unit = packaged ? 'packaged item' : (item.unit === 'KG' ? 'kilograms' : 'each');
   const resumeVoice = typeof voiceWanted !== 'undefined' && voiceWanted;
   if (resumeVoice && typeof pauseVoiceForCamera === 'function') pauseVoiceForCamera();
   speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(`${item.name}. P L U ${digits}. ${unit}.`);
+  const u = new SpeechSynthesisUtterance(packaged
+    ? `${item.name}. Barcode ${digits}. ${unit}.`
+    : `${item.name}. P L U ${digits}. ${unit}.`);
   u.lang = 'en-CA';
   u.rate = 0.88;
   u.onend = () => { if (resumeVoice && typeof resumeVoiceAfterCamera === 'function') resumeVoiceAfterCamera(); };
