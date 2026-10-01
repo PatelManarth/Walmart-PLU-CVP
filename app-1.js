@@ -106,7 +106,10 @@ function barcodeVariants(raw) {
   const value = canonicalBarcode(raw);
   if (!value) return [];
   const out = new Set([value]);
-  // UPC-A is commonly surfaced by scanners either as 12 digits or as EAN-13 with a leading zero.
+  // UPC-A can be displayed with a suppressed leading zero on some product pages,
+  // while scanners normally return the full 12 digits. EAN-13 may add another zero.
+  if (/^\d{11}$/.test(value)) out.add(`0${value}`);
+  if (/^0\d{11}$/.test(value)) out.add(value.slice(1));
   if (/^\d{12}$/.test(value)) out.add(`0${value}`);
   if (/^0\d{12}$/.test(value)) out.add(value.slice(1));
   return [...out];
