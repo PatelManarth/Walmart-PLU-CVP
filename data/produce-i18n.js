@@ -101,6 +101,15 @@ window.PRODUCE_I18N_RULES = [
   {match:["watermelon"], names:{esCO:["sandía"],esES:["sandía"],esUS:["sandía"],fr:["pastèque"],hi:["तरबूज","tarbooz"],gu:["તરબૂચ","tarbuch"],fil:["pakwan"]}},
   {match:["yucca","yuca","cassava","manioc"], names:{esCO:["yuca"],esES:["yuca","mandioca"],esUS:["yuca","cassava"],fr:["manioc"],hi:["कसावा","cassava"],gu:["કસાવા"],fil:["kamoteng kahoy","cassava"]}},
   {match:["turmeric"], names:{esCO:["cúrcuma"],esES:["cúrcuma"],esUS:["cúrcuma"],fr:["curcuma"],hi:["हल्दी","haldi"],gu:["હળદર","haldar"],fil:["luyang dilaw"]}},
+  {match:["a choy"], names:{esCO:["a choy"],esES:["a choy"],esUS:["a choy"],fr:["a choy"],hi:["ए चॉय","a choy"],gu:["એ ચોય","a choy"],fil:["a choy"]}},
+  {match:["ta kou choy"], names:{esCO:["ta kou choy"],esES:["ta kou choy"],esUS:["ta kou choy"],fr:["ta kou choy"],hi:["टा काउ चॉय"],gu:["તા કાઉ ચોય"],fil:["ta kou choy"]}},
+  {match:["cherry","cherries"], names:{esCO:["cereza"],esES:["cereza"],esUS:["cereza"],fr:["cerise"],hi:["चेरी","cherry"],gu:["ચેરી"],fil:["seresa","cherry"]}},
+  {match:["kiwi"], names:{esCO:["kiwi"],esES:["kiwi"],esUS:["kiwi"],fr:["kiwi"],hi:["कीवी","kiwi"],gu:["કીવી"],fil:["kiwi"]}},
+  {match:["leek","leeks"], names:{esCO:["puerro"],esES:["puerro"],esUS:["puerro"],fr:["poireau"],hi:["लीक"],gu:["લીક"],fil:["leek"]}},
+  {match:["lettuce"], names:{esCO:["lechuga"],esES:["lechuga"],esUS:["lechuga"],fr:["laitue"],hi:["सलाद पत्ता","salad patta"],gu:["લેટિસ","સલાડના પાન"],fil:["letsugas","lettuce"]}},
+  {match:["lemon","lemons"], names:{esCO:["limón amarillo","limón"],esES:["limón"],esUS:["limón amarillo","lemon"],fr:["citron"],hi:["नींबू","nimbu"],gu:["લીંબુ","limbu"],fil:["lemon"]}},
+  {match:["lime","limes"], names:{esCO:["limón verde","lima"],esES:["lima"],esUS:["lima","limón verde"],fr:["lime","citron vert"],hi:["नींबू","nimbu"],gu:["લીંબુ","limbu"],fil:["dayap","lime"]}},
+  {match:["lotus root","lotus roots"], names:{esCO:["raíz de loto"],esES:["raíz de loto"],esUS:["raíz de loto"],fr:["racine de lotus"],hi:["कमल ककड़ी","kamal kakdi"],gu:["કમળ કાકડી","kamal kakdi"],fil:["ugat ng lotus","lotus root"]}},
   {match:["zucchini"], names:{esCO:["calabacín"],esES:["calabacín"],esUS:["calabacita","zucchini"],fr:["courgette"],hi:["ज़ुकीनी"],gu:["ઝુકીની"],fil:["zucchini"]}}
 ];
 
