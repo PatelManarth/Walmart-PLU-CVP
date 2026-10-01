@@ -33,7 +33,7 @@
           <div class="search-row">
             <span class="search-icon" aria-hidden="true">⌕</span>
             <input id="searchInput" type="search" inputmode="search" autocomplete="off" autocapitalize="none" spellcheck="false"
-              placeholder="Name, alias, PLU or mapped barcode…" aria-label="Search produce" />
+              placeholder="Any-language name, PLU or package barcode…" aria-label="Search produce" />
             <button id="clearSearch" class="search-action hidden" type="button" aria-label="Clear search">×</button>
             <button id="voiceSearch" class="search-action" type="button" aria-label="Voice search" title="Voice search">🎙️</button>
           </div>
@@ -44,7 +44,7 @@
           <div>
             <span class="kicker">Fast path</span>
             <h2>Identify → confirm KG/EA → use PLU</h2>
-            <p>Built for the manual lookup step before an approved workplace workflow. This app does not submit claims, change inventory, or print labels.</p>
+            <p>Lookup loose produce in multiple languages, scan known packaged-product UPCs, and stage physical bags/packages before an approved workplace workflow. This app does not submit claims, change inventory, or print labels.</p>
           </div>
           <div class="hero-actions">
             <button id="openVisualGuide" class="secondary-btn" type="button">🧭 I don’t know what it is</button>
@@ -74,8 +74,8 @@
       <section id="queueView" class="view" aria-labelledby="queueTab">
         <div class="section-head queue-head">
           <div>
-            <h2>Physical bags</h2>
-            <p>One exact product can have multiple physical bags. Keep one OPEN bag until it is full or ready.</p>
+            <h2>Bags & packaged units</h2>
+            <p>Loose produce uses OPEN physical bags. Known packaged products are tracked one physical package at a time from their exact UPC.</p>
           </div>
           <button id="clearCompleted" class="link-btn" type="button">Clear finished</button>
         </div>
@@ -227,7 +227,7 @@
       <h2>Produce PLU Helper</h2>
       <p>This is an independent personal lookup and physical-bag staging helper. It is not affiliated with, endorsed by, sponsored by, or connected to any retailer. It does not connect to employer systems, handhelds, claims, pricing, inventory, or label printing.</p>
       <div id="dataVersion" class="data-version"></div>
-      <p><strong>Important:</strong> this is a manually curated PLU reference. Some values may be retailer-assigned, local, outdated, or entered incorrectly. Verify unusual or conflicting codes against your current approved workplace source before operational use.</p>
+      <p><strong>Important:</strong> loose-produce PLUs are a manually curated reference. The packaged catalog is seeded from public product listings and uses exact UPC matches only. Product packaging, UPCs, sizes, availability, and local codes can change, so always confirm the physical package/name and your current approved workplace source.</p>
       <p>Voice and camera features are progressive enhancements. Voice recognition and browser barcode detection are not supported equally by every browser, so normal typed search always remains the reliable fallback.</p>
       <p>No sign-in, workplace location, employee ID, or credentials are stored. Favorites, recents, aliases, queue data and learned barcode mappings stay in this browser. Reference photos are saved only in this browser’s local IndexedDB. Barcode mappings can be exported/imported as JSON for backup.</p>
     </div>
@@ -241,6 +241,8 @@
   <script src="data/produce-3.js"></script>
   <script src="data/produce-4.js"></script>
   <script src="data/barcodes.js"></script>
+  <script src="data/produce-i18n.js"></script>
+  <script src="data/packaged-products.js"></script>
   <script src="app-1.js"></script>
   <script src="app-2.js"></script>
   <script src="app-3.js"></script>
