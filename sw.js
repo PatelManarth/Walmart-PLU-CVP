@@ -1,4 +1,4 @@
-const CACHE = 'produce-cvp-v5';
+const CACHE = 'produce-cvp-v6';
 const ASSETS = [
   './','./index.html','./styles.css','./app-1.js','./app-2.js','./app-3.js','./app-4.js','./app-5.js','./app-6.js','./data/produce-meta.js','./data/produce-1.js','./data/produce-2.js','./data/produce-3.js','./data/produce-4.js','./data/barcodes.js','./manifest.webmanifest',
   './assets/icon.svg'
