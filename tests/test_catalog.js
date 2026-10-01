@@ -1,0 +1,59 @@
+'use strict';
+const fs = require('fs');
+const vm = require('vm');
+global.window = {};
+
+function load(path) {
+  vm.runInThisContext(fs.readFileSync(path, 'utf8'), { filename: path });
+}
+
+load('data/produce-meta.js');
+for (let i = 1; i <= 4; i++) load(`data/produce-${i}.js`);
+load('data/produce-i18n.js');
+load('data/packaged-products.js');
+
+if (!window.PRODUCE_DATA || window.PRODUCE_DATA.items.length !== 211) {
+  throw new Error('Expected 211 loose produce rows');
+}
+if (!Array.isArray(window.PRODUCE_I18N_RULES) || window.PRODUCE_I18N_RULES.length < 60) {
+  throw new Error('Multilingual rule catalog is unexpectedly small');
+}
+for (const lang of ['esCO','esES','esUS','fr','hi','gu','fil']) {
+  if (!window.PRODUCE_I18N_LANG_LABELS?.[lang]) throw new Error(`Missing language label: ${lang}`);
+  if (!window.PRODUCE_I18N_RULES.some(r => Array.isArray(r.names?.[lang]) && r.names[lang].length)) {
+    throw new Error(`No aliases found for language: ${lang}`);
+  }
+}
+
+const appleRule = window.PRODUCE_I18N_RULES.find(r => r.match?.includes('apple'));
+if (!appleRule?.names?.esCO?.includes('manzana')) throw new Error('Spanish apple alias missing');
+if (!appleRule?.names?.fr?.includes('pomme')) throw new Error('French apple alias missing');
+if (!appleRule?.names?.hi?.some(x => x.includes('सेब'))) throw new Error('Hindi apple alias missing');
+if (!appleRule?.names?.gu?.some(x => x.includes('સફરજન'))) throw new Error('Gujarati apple alias missing');
+if (!appleRule?.names?.fil?.includes('mansanas')) throw new Error('Filipino apple alias missing');
+
+const packages = window.PACKAGED_PRODUCTS;
+if (!Array.isArray(packages) || packages.length < 30) throw new Error('Packaged catalog is unexpectedly small');
+const ids = new Set();
+const barcodes = new Set();
+
+function validUpcA(code) {
+  if (!/^\d{12}$/.test(code)) return false;
+  const digits = [...code].map(Number);
+  const check = digits.pop();
+  let sum = 0;
+  digits.forEach((d,i) => { sum += d * (i % 2 === 0 ? 3 : 1); });
+  return (10 - (sum % 10)) % 10 === check;
+}
+
+for (const p of packages) {
+  if (!p.id || ids.has(p.id)) throw new Error(`Duplicate/missing package id: ${p.id}`);
+  ids.add(p.id);
+  if (!p.name || !p.category || !p.sourceUrl) throw new Error(`Incomplete packaged item: ${p.id}`);
+  if (!/^\d{12}$/.test(p.barcode)) throw new Error(`Packaged UPC must be 12 digits: ${p.id} ${p.barcode}`);
+  if (!validUpcA(p.barcode)) throw new Error(`Invalid UPC-A check digit: ${p.id} ${p.barcode}`);
+  if (barcodes.has(p.barcode)) throw new Error(`Duplicate packaged UPC: ${p.barcode}`);
+  barcodes.add(p.barcode);
+}
+
+console.log(`OK: ${packages.length} packaged UPCs and ${window.PRODUCE_I18N_RULES.length} multilingual rules validated`);
