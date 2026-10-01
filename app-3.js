@@ -283,7 +283,17 @@ function nextLabelRoundNumber() {
 
 async function startLabelRound(closeOpen = false) {
   const existing = currentLabelingEntries();
-  let round = existing[0]?.q.round || null;
+
+  // A label round is frozen once it starts. New OPEN/READY bags stay outside it
+  // until the current round is completed, so incoming culled produce cannot
+  // silently change the set of bags being labeled.
+  if (existing.length) {
+    state.rapidIndex = Math.min(state.rapidIndex, existing.length - 1);
+    if (!$('#rapidDialog').open) $('#rapidDialog').showModal();
+    await requestWakeLock();
+    renderRapid();
+    return;
+  }
 
   if (closeOpen) {
     state.queue.forEach(q => {
@@ -295,13 +305,13 @@ async function startLabelRound(closeOpen = false) {
   }
 
   const ready = state.queue.filter(q => q.status === 'ready');
-  if (!existing.length && !ready.length) {
+  if (!ready.length) {
     toast(closeOpen ? 'No open or ready bags to label' : 'No ready bags yet');
     renderQueue();
     return;
   }
 
-  if (!round) round = nextLabelRoundNumber();
+  const round = nextLabelRoundNumber();
   ready.forEach(q => {
     q.status = 'labeling';
     q.round = round;
