@@ -54,6 +54,7 @@ $('#manualBarcode').addEventListener('keydown', e => { if (e.key === 'Enter') { 
 $('#mapSearch').addEventListener('input', e => renderBarcodeMapResults(e.target.value));
 $('[data-close-barcode-map]').addEventListener('click', () => $('#barcodeMapDialog').close());
 $('#barcodeMapDialog').addEventListener('click', e => { if (e.target === $('#barcodeMapDialog')) $('#barcodeMapDialog').close(); });
+$('#barcodeMapDialog').addEventListener('close', resumeVoiceAfterCamera);
 $('#exportBarcodeMappings').addEventListener('click', exportBarcodeMappings);
 $('#importBarcodeMappings').addEventListener('change', e => { importBarcodeMappings(e.target.files?.[0]); e.target.value = ''; });
 $('#clearBarcodeMappings').addEventListener('click', () => {
@@ -97,12 +98,6 @@ $('#dataVersion').innerHTML = `<strong>${esc(DB.meta.title)}</strong><br>${esc(D
 renderChips(); renderResults(); renderQueue(); renderGuide(); renderBarcodeManager(); updateQueueCount();
 if (location.hash === '#queue') switchView('queueView');
 else if (location.hash === '#guide') switchView('guideView');
-
-// Load the optional local Code 128 PLU display after the core app is ready.
-const pluBarcodeScript = document.createElement('script');
-pluBarcodeScript.src = './app-6.js';
-pluBarcodeScript.defer = true;
-document.head.appendChild(pluBarcodeScript);
 
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js', { scope: './' }).catch(() => {}));
