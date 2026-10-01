@@ -38,9 +38,15 @@ function ruleMatchesItem(rule, item) {
   if ((rule.exclude || []).some(has)) return false;
   return (rule.match || []).some(has);
 }
-const uncovered = window.PRODUCE_DATA.items.filter(item => !window.PRODUCE_I18N_RULES.some(rule => ruleMatchesItem(rule,item)));
+const requiredLangs = ['esCO','esES','esUS','fr','hi','gu','fil'];
+const uncovered = [];
+for (const item of window.PRODUCE_DATA.items) {
+  const matching = window.PRODUCE_I18N_RULES.filter(rule => ruleMatchesItem(rule,item));
+  const missing = requiredLangs.filter(lang => !matching.some(rule => Array.isArray(rule.names?.[lang]) && rule.names[lang].length));
+  if (missing.length) uncovered.push({ name: item.name, missing });
+}
 if (uncovered.length) {
-  throw new Error(`Produce items without multilingual aliases: ${uncovered.map(x => x.name).join(', ')}`);
+  throw new Error(`Produce items missing requested language aliases: ${uncovered.map(x => `${x.name} [${x.missing.join(',')}]`).join('; ')}`);
 }
 
 const appleRule = window.PRODUCE_I18N_RULES.find(r => r.match?.includes('apple'));
@@ -51,7 +57,7 @@ if (!appleRule?.names?.gu?.some(x => x.includes('સફરજન'))) throw new E
 if (!appleRule?.names?.fil?.includes('mansanas')) throw new Error('Filipino apple alias missing');
 
 const packages = window.PACKAGED_PRODUCTS;
-if (!Array.isArray(packages) || packages.length < 30) throw new Error('Packaged catalog is unexpectedly small');
+if (!Array.isArray(packages) || packages.length < 50) throw new Error('Packaged catalog is unexpectedly small');
 const ids = new Set();
 const barcodes = new Set();
 
