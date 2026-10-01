@@ -151,7 +151,7 @@ document.addEventListener('visibilitychange', () => {
 updateVoiceButton();
 
 // Camera / barcode assist.
-async function openCameraDialog() { $('#cameraDialog').showModal(); $('#cameraStatus').textContent = ('BarcodeDetector' in window) ? 'Ready — start live scan' : 'Live barcode detection may be unavailable here; camera/photo fallback still works'; }
+async function openCameraDialog() { pauseVoiceForCamera(); $('#cameraDialog').showModal(); $('#cameraStatus').textContent = ('BarcodeDetector' in window) ? 'Ready — start live scan' : 'Live barcode detection may be unavailable here; camera/photo fallback still works'; }
 
 async function startCamera() {
   stopCamera();
@@ -169,6 +169,8 @@ function stopCamera() {
   state.cameraStream?.getTracks?.().forEach(t => t.stop()); state.cameraStream = null;
   const video = $('#cameraVideo'); if (video) video.srcObject = null;
   if ($('#cameraStatus')) $('#cameraStatus').textContent = 'Camera stopped';
+  // If the camera dialog has fully closed, return to continuous voice mode automatically.
+  if (!$('#cameraDialog')?.open) resumeVoiceAfterCamera();
 }
 
 async function beginBarcodeLoop() {
@@ -222,8 +224,11 @@ function handleScannedCode(raw) {
 function openBarcodeMapper(raw) {
   state.pendingBarcode = canonicalBarcode(raw);
   if (!state.pendingBarcode) return;
+  pauseVoiceForCamera();
   stopCamera();
   if ($('#cameraDialog').open) $('#cameraDialog').close();
+  // Keep voice paused while the one-time barcode mapping dialog is open.
+  pauseVoiceForCamera();
   $('#mapBarcodeValue').textContent = state.pendingBarcode;
   $('#mapSearch').value = '';
   renderBarcodeMapResults('');
