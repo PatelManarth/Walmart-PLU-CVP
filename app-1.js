@@ -75,9 +75,15 @@ function customAliases(item) { return state.aliases[item.id] || []; }
 function multilingualGroups(item) {
   if (!item || item.type === 'packaged') return {};
   const haystack = normalize([item.name, ...(item.aliases || [])].join(' '));
+  const padded = ` ${haystack} `;
+  const hasPhrase = term => {
+    const phrase = normalize(term);
+    return !!phrase && padded.includes(` ${phrase} `);
+  };
   const groups = {};
   for (const rule of I18N_RULES) {
-    if (!(rule.match || []).some(term => haystack.includes(normalize(term)))) continue;
+    if ((rule.exclude || []).some(hasPhrase)) continue;
+    if (!(rule.match || []).some(hasPhrase)) continue;
     for (const [lang, names] of Object.entries(rule.names || {})) {
       groups[lang] = [...new Set([...(groups[lang] || []), ...(names || [])])];
     }
