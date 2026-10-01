@@ -1,6 +1,7 @@
 'use strict';
 async function openDetail(item) {
   if (!item) return;
+  state.currentItemId = item.id;
   pushRecent(item.id);
   bumpUsage(item.id);
   const fav = state.favorites.includes(item.id);
@@ -43,7 +44,7 @@ async function openDetail(item) {
       </div>
     </div>`;
   $('#copyCode').addEventListener('click', () => copyText(item.plu, `PLU ${item.plu} copied`));
-  $('#addQueue').addEventListener('click', () => { addToQueue(item.id); haptic(); toast('Added to CVP queue'); updateQueueCount(); });
+  $('#addQueue').addEventListener('click', () => { addToQueue(item.id); haptic(); toast('Added to queue'); updateQueueCount(); });
   $('#speakCode').addEventListener('click', () => speakCode(item));
   $('#toggleFavorite').addEventListener('click', () => { toggleFavorite(item.id); openDetail(item); });
   $('#addAlias').addEventListener('click', () => addCustomAlias(item));
@@ -87,9 +88,13 @@ function speakCode(item) {
   if (!('speechSynthesis' in window)) { toast('Read-aloud is unavailable'); return; }
   const digits = item.plu.split('').join(' ');
   const unit = item.unit === 'KG' ? 'kilograms' : 'each';
+  const resumeVoice = typeof voiceWanted !== 'undefined' && voiceWanted;
+  if (resumeVoice && typeof pauseVoiceForCamera === 'function') pauseVoiceForCamera();
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(`${item.name}. P L U ${digits}. ${unit}.`);
   u.lang = 'en-CA'; u.rate = 0.88;
+  u.onend = () => { if (resumeVoice && typeof resumeVoiceAfterCamera === 'function') resumeVoiceAfterCamera(); };
+  u.onerror = () => { if (resumeVoice && typeof resumeVoiceAfterCamera === 'function') resumeVoiceAfterCamera(); };
   speechSynthesis.speak(u);
 }
 
