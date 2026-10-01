@@ -404,7 +404,7 @@ function renderRapid() {
     <div class="rapid-unit">${packaged ? 'PACKAGED • EA' : (item.unit === 'KG' ? 'WEIGHT • KG' : 'COUNT • EA')}</div>
     <div class="rapid-qty">${packaged ? 'Use the barcode on the physical package → print/apply the label as required.' : 'Weigh/count as needed → print label → attach label → tie bag.'}</div>
     <div class="rapid-actions">
-      <button id="rapidCopy" class="outline-btn" type="button">Copy PLU</button>
+      <button id="rapidCopy" class="outline-btn" type="button">${packaged ? 'Copy barcode' : 'Copy PLU'}</button>
       <button id="rapidDoneNext" class="primary-btn" type="button">✓ Label done</button>
     </div>
     <div class="rapid-secondary">
