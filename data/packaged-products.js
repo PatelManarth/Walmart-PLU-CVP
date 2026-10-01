@@ -45,10 +45,23 @@ window.PACKAGED_PRODUCTS = [
   {id:"pkg040",barcode:"062287565139",name:"Renée's Caesar Salad Dressing",category:"Dip / dressing",sourceUrl:"https://www.walmart.ca/en/ip/6000200916899"},
   {id:"pkg041",barcode:"062287112067",name:"Renée's Caesar Dressing, 355 mL",category:"Dip / dressing",sourceUrl:"https://www.walmart.ca/en/ip/6000191270528"},
   {id:"pkg042",barcode:"068100046342",name:"Kraft Thousand Island Calorie Wise Salad Dressing",category:"Dressing",sourceUrl:"https://www.walmart.ca/en/ip/10223108"},
-  {id:"pkg043",barcode:"811149004893",name:"Veggie Mix with Dip, 230 g",category:"Prepared produce",sourceUrl:"https://www.walmart.ca/en/ip/6000205343190"}
+  {id:"pkg043",barcode:"811149004893",name:"Veggie Mix with Dip, 230 g",category:"Prepared produce",sourceUrl:"https://www.walmart.ca/en/ip/6000205343190"},
+  {id:"pkg044",barcode:"627735282787",name:"Yellow Onions, Your Fresh Market, 10 lb bag",category:"Bagged vegetables",sourceUrl:"https://www.walmart.ca/en/ip/yellow-onions-your-fresh-market/3EO7IZD7UIE1"},
+  {id:"pkg045",barcode:"033383600024",name:"Yellow Onions, Your Fresh Market, 3 lb bag",category:"Bagged vegetables",sourceUrl:"https://www.walmart.ca/en/ip/onion-yellow-your-fresh-market/6000197111438"},
+  {id:"pkg046",barcode:"835057121787",name:"Organic Red Onions, Your Fresh Market, 3 lb bag",category:"Bagged vegetables",sourceUrl:"https://www.walmart.ca/en/ip/your-fresh-market-organic-red-onions/6000207004513"},
+  {id:"pkg047",barcode:"627735282916",name:"All-Purpose Potatoes, Your Fresh Market, 10 lb bag",category:"Bagged vegetables",sourceUrl:"https://www.walmart.ca/en/ip/all-purpose-potatoes-your-fresh-market/6S3DK4D1OCBK"},
+  {id:"pkg048",barcode:"627735284262",name:"White Potatoes, Your Fresh Market, 10 lb bag",category:"Bagged vegetables",sourceUrl:"https://www.walmart.ca/en/ip/white-potatoes-your-fresh-market/3YXVL4B4O6HF"},
+  {id:"pkg049",barcode:"628233922335",name:"Organic Yellow Potatoes, Your Fresh Market, 3 lb bag",category:"Bagged vegetables",sourceUrl:"https://www.walmart.ca/en/ip/your-fresh-market-organic-yellow-potatoes/6000206454064"},
+  {id:"pkg050",barcode:"628915362527",name:"Yellow Potatoes, Your Fresh Market, 5 lb bag",category:"Bagged vegetables",sourceUrl:"https://www.walmart.ca/en/ip/your-fresh-market-yellow-potatoes/6000196075652"},
+  {id:"pkg051",barcode:"605806001345",name:"Russet Potatoes, Your Fresh Market, 5 lb bag",category:"Bagged vegetables",sourceUrl:"https://www.walmart.ca/en/ip/your-fresh-market-russet-potatoes/6000196075655"},
+  {id:"pkg052",barcode:"628915551693",name:"Russet Potatoes, Your Fresh Market, Ontario Grown, 5 lb bag",category:"Bagged vegetables",sourceUrl:"https://www.walmart.ca/en/ip/your-fresh-market-russet-potatoes-ontario-grown-5-lb-bag/6000194576575"},
+  {id:"pkg053",barcode:"628915549867",name:"Clementines, 2.3 kg bag",category:"Bagged fruit",sourceUrl:"https://www.walmart.ca/en/ip/clementines/6000196556126"},
+  {id:"pkg054",barcode:"880073000233",name:"Mini Cucumbers, 1 lb bag",category:"Bagged vegetables",sourceUrl:"https://www.walmart.ca/en/ip/mini-cucumbers/6000191284672"},
+  {id:"pkg055",barcode:"078783515127",name:"Baby Carrots, packaged",category:"Bagged vegetables",sourceUrl:"https://www.walmart.ca/en/ip/baby-carrots/6000195944823"}
 ];
 
 window.PACKAGED_PRODUCTS_META = {
   source: "Current public Walmart.ca product listings",
+  verifiedAt: "2026-10-01",
   note: "Exact barcode matches only. Product packaging, UPC/GTIN, size, supplier, and availability can change. Confirm the package name/size on the physical item before using the match."
 };
