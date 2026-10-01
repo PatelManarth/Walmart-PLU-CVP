@@ -2,6 +2,18 @@
 
 const DB = window.PRODUCE_DATA;
 const ITEMS = DB.items;
+const PACKAGED_ITEMS = (window.PACKAGED_PRODUCTS || []).map(p => ({
+  ...p,
+  type: 'packaged',
+  plu: '',
+  unit: 'EA',
+  emoji: '📦',
+  aliases: [p.category || 'packaged', 'packaged', 'bagged', 'prepacked', 'pre-packed'],
+  visual: ''
+}));
+const CATALOG_ITEMS = [...ITEMS, ...PACKAGED_ITEMS];
+const I18N_RULES = window.PRODUCE_I18N_RULES || [];
+const I18N_LANG_LABELS = window.PRODUCE_I18N_LANG_LABELS || {};
 const BUILTIN_BARCODES = window.BARCODE_DATA?.mappings || [];
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -48,13 +60,38 @@ function save(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
 function migrateSimple(oldKey) { return load(oldKey, []); }
 function migrateQueue() { return load('produce-cvp.queue.v1', []); }
 function normalize(s) {
-  return String(s ?? '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+  return String(s ?? '')
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^\p{L}\p{N}\p{M}]+/gu,' ')
+    .trim();
 }
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
 function findId(plu, name) { return ITEMS.find(x => x.plu === plu && x.name === name)?.id; }
-function byId(id) { return ITEMS.find(x => x.id === id); }
+function byId(id) { return CATALOG_ITEMS.find(x => x.id === id); }
 function customAliases(item) { return state.aliases[item.id] || []; }
-function allAliases(item) { return [...(item.aliases || []), ...customAliases(item)]; }
+
+function multilingualGroups(item) {
+  if (!item || item.type === 'packaged') return {};
+  const haystack = normalize([item.name, ...(item.aliases || [])].join(' '));
+  const groups = {};
+  for (const rule of I18N_RULES) {
+    if (!(rule.match || []).some(term => haystack.includes(normalize(term)))) continue;
+    for (const [lang, names] of Object.entries(rule.names || {})) {
+      groups[lang] = [...new Set([...(groups[lang] || []), ...(names || [])])];
+    }
+  }
+  return groups;
+}
+
+function multilingualAliases(item) {
+  return Object.values(multilingualGroups(item)).flat();
+}
+
+function allAliases(item) {
+  return [...new Set([...(item.aliases || []), ...multilingualAliases(item), ...customAliases(item)])];
+}
 function haptic(ms = 18) { try { navigator.vibrate?.(ms); } catch {} }
 
 
@@ -73,6 +110,12 @@ function barcodeVariants(raw) {
   if (/^\d{12}$/.test(value)) out.add(`0${value}`);
   if (/^0\d{12}$/.test(value)) out.add(value.slice(1));
   return [...out];
+}
+
+function resolvePackagedBarcode(raw) {
+  const variants = barcodeVariants(raw);
+  const item = PACKAGED_ITEMS.find(p => barcodeVariants(p.barcode).some(v => variants.includes(v)));
+  return item ? { item, source: 'public-packaged-catalog', matchedBarcode: item.barcode } : null;
 }
 
 function builtInBarcodeRecord(raw) {
@@ -176,8 +219,9 @@ function searchScore(item, rawQuery) {
   if (!q) return 0;
   const name = normalize(item.name);
   const aliases = allAliases(item).map(normalize);
-  const all = [name, ...aliases, item.plu];
-  if (item.plu === q) return 1000;
+  const code = normalize(item.type === 'packaged' ? item.barcode : item.plu);
+  const all = [name, ...aliases, code].filter(Boolean);
+  if (code && code === q) return 1000;
   if (name === q || aliases.includes(q)) return 900;
   if (name.startsWith(q)) return 800;
   if (aliases.some(a => a.startsWith(q))) return 760;
@@ -204,7 +248,7 @@ function groupFor(item) {
 }
 
 function renderChips() {
-  const filters = ['All', 'Saved', 'Frequent', 'Recent', 'Roots', 'Gourds', 'Greens', 'Fruit', 'EA', 'KG'];
+  const filters = ['All', 'Packaged', 'Saved', 'Frequent', 'Recent', 'Roots', 'Gourds', 'Greens', 'Fruit', 'EA', 'KG'];
   $('#categoryChips').innerHTML = filters.map(f => `<button class="filter-chip ${state.filter === f ? 'active' : ''}" data-filter="${f}" type="button">${f}</button>`).join('');
   $$('.filter-chip').forEach(btn => btn.addEventListener('click', () => {
     state.filter = btn.dataset.filter;
@@ -230,23 +274,39 @@ function renderFrequentStrip() {
 function filteredItems() {
   let items;
   if (state.query.trim()) {
+    const packagedHit = resolvePackagedBarcode(state.query);
     const barcodeHit = resolveBarcode(state.query);
-    if (barcodeHit) items = [barcodeHit.item];
-    else items = ITEMS.map(item => ({item, score: searchScore(item, state.query)})).filter(x => x.score >= 0).sort((a,b) => b.score - a.score || a.item.name.localeCompare(b.item.name)).map(x => x.item);
+    if (packagedHit) items = [packagedHit.item];
+    else if (barcodeHit) items = [barcodeHit.item];
+    else items = CATALOG_ITEMS
+      .map(item => ({item, score: searchScore(item, state.query)}))
+      .filter(x => x.score >= 0)
+      .sort((a,b) => b.score - a.score || a.item.name.localeCompare(b.item.name))
+      .map(x => x.item);
+  } else if (state.filter === 'Packaged') {
+    items = [...PACKAGED_ITEMS].sort((a,b) => a.name.localeCompare(b.name));
   } else {
     items = quickIds.map(byId).filter(Boolean);
   }
+  if (state.filter === 'Packaged') return items.filter(x => x.type === 'packaged');
   if (state.filter === 'Saved') return state.favorites.map(byId).filter(Boolean).filter(x => !state.query.trim() || items.some(i => i.id === x.id));
   if (state.filter === 'Recent') return state.recents.map(byId).filter(Boolean).filter(x => !state.query.trim() || items.some(i => i.id === x.id));
   if (state.filter === 'Frequent') return frequentItems(30).filter(x => !state.query.trim() || items.some(i => i.id === x.id));
-  if (state.filter === 'EA' || state.filter === 'KG') return items.filter(x => x.unit === state.filter);
-  if (['Roots','Gourds','Greens','Fruit'].includes(state.filter)) return items.filter(x => groupFor(x) === state.filter);
+  if (state.filter === 'EA' || state.filter === 'KG') return items.filter(x => x.type !== 'packaged' && x.unit === state.filter);
+  if (['Roots','Gourds','Greens','Fruit'].includes(state.filter)) return items.filter(x => x.type !== 'packaged' && groupFor(x) === state.filter);
   return items;
 }
 
 function resultCard(item) {
   const aliases = allAliases(item);
   const alias = aliases.slice(0,3).join(' • ');
+  if (item.type === 'packaged') {
+    return `<button class="product-card packaged-card" data-id="${item.id}" type="button">
+      <span class="emoji-box" aria-hidden="true">📦</span>
+      <span><span class="product-name">${esc(item.name)}</span><span class="alias-line">${esc(item.category || 'Packaged product')}</span></span>
+      <span class="code-stack"><span class="plu package-upc">${esc(item.barcode.slice(-6))}</span><span class="unit">UPC</span></span>
+    </button>`;
+  }
   return `<button class="product-card" data-id="${item.id}" type="button">
     <span class="emoji-box" aria-hidden="true" data-thumb-for="${item.id}">${item.emoji}</span>
     <span><span class="product-name">${esc(item.name)}</span><span class="alias-line">${esc(alias || (item.visual ? item.visual : 'Tap for details'))}</span></span>
@@ -262,9 +322,13 @@ function renderResults() {
   $('#showAll').textContent = hasQuery ? 'Clear' : 'Show all';
   $('#results').innerHTML = items.map(resultCard).join('');
   $('#emptyState').classList.toggle('hidden', items.length !== 0);
-  $$('.product-card').forEach(card => card.addEventListener('click', () => openDetail(byId(card.dataset.id))));
-  hydrateReferenceThumbs(items);
+  $('.product-card').forEach(card => card.addEventListener('click', () => {
+    const item = byId(card.dataset.id);
+    if (item?.type === 'packaged') openPackagedDetail(item);
+    else openDetail(item);
+  }));
+  hydrateReferenceThumbs(items.filter(x => x.type !== 'packaged'));
   renderFrequentStrip();
 }
 
-function duplicatesFor(item) { return ITEMS.filter(x => x.plu === item.plu && x.id !== item.id); }
+function duplicatesFor(item) { return item?.type === 'packaged' ? [] : ITEMS.filter(x => x.plu === item.plu && x.id !== item.id); }
