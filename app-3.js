@@ -147,15 +147,66 @@ function setSearch(text) {
   state.filter = 'All'; renderChips(); renderResults(); switchView('lookupView');
 }
 
+function closeDetailForVoiceNavigation() {
+  const dialog = $('#detailDialog');
+  if (dialog?.open) dialog.close();
+}
+
+function rankedVoiceMatches(query) {
+  return ITEMS
+    .map(item => ({ item, score: searchScore(item, query) }))
+    .filter(x => x.score >= 0)
+    .sort((a,b) => b.score - a.score || a.item.name.localeCompare(b.item.name));
+}
+
 function parseVoiceCommand(text) {
   const n = normalize(text);
   if (!n) return;
-  if (/^(queue|open queue|show queue)$/.test(n)) { switchView('queueView'); return; }
-  if (/^(guide|visual guide|open guide)$/.test(n)) { switchView('guideView'); return; }
+
+  if (/^(stop listening|stop microphone|mic off|microphone off)$/.test(n)) {
+    if (typeof turnVoiceOff === 'function') turnVoiceOff();
+    return;
+  }
+
+  if (/^(add it|add this|queue it|queue this)$/.test(n)) {
+    const item = byId(state.currentItemId);
+    if (!item) { toast('Open a produce item first'); return; }
+    addToQueue(item.id);
+    closeDetailForVoiceNavigation();
+    haptic();
+    toast(`${item.name} added — listening for next item`);
+    return;
+  }
+
+  if (/^(queue|open queue|show queue)$/.test(n)) {
+    closeDetailForVoiceNavigation();
+    switchView('queueView');
+    return;
+  }
+  if (/^(guide|visual guide|open guide)$/.test(n)) {
+    closeDetailForVoiceNavigation();
+    switchView('guideView');
+    return;
+  }
+
   const addMatch = n.match(/^(add|queue) (.+)$/);
   if (addMatch) {
-    const matches = ITEMS.map(item => ({item, score: searchScore(item, addMatch[2])})).filter(x => x.score >= 650).sort((a,b) => b.score-a.score);
-    if (matches.length === 1 || (matches[0] && (!matches[1] || matches[0].score > matches[1].score))) { addToQueue(matches[0].item.id); toast(`${matches[0].item.name} added`); return; }
+    const matches = rankedVoiceMatches(addMatch[2]).filter(x => x.score >= 650);
+    if (matches.length === 1 || (matches[0] && (!matches[1] || matches[0].score > matches[1].score))) {
+      addToQueue(matches[0].item.id);
+      closeDetailForVoiceNavigation();
+      toast(`${matches[0].item.name} added — listening for next item`);
+      return;
+    }
   }
+
+  // A new spoken produce name replaces whatever item is currently open.
+  // We only auto-open when the match is very strong and unambiguous; otherwise
+  // we show the matching list so similar items (e.g. several tomatoes/carrots) are never guessed.
+  const matches = rankedVoiceMatches(text);
+  closeDetailForVoiceNavigation();
   setSearch(text);
+  if (matches[0] && matches[0].score >= 850 && (!matches[1] || matches[0].score >= matches[1].score + 60)) {
+    openDetail(matches[0].item);
+  }
 }
