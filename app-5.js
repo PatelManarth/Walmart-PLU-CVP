@@ -94,7 +94,7 @@ document.addEventListener('keydown', e => {
   }
 });
 
-$('#dataVersion').innerHTML = `<strong>${esc(DB.meta.title)}</strong><br>${esc(DB.meta.version)} • ${ITEMS.length} entries`;
+$('#dataVersion').innerHTML = `<strong>${esc(DB.meta.title)}</strong><br>${esc(DB.meta.version)} • ${ITEMS.length} loose produce entries • ${PACKAGED_ITEMS.length} packaged UPCs`;
 
 renderChips(); renderResults(); renderQueue(); renderGuide(); renderBarcodeManager(); updateQueueCount();
 if (location.hash === '#queue') switchView('queueView');
