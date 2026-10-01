@@ -11,30 +11,144 @@ $('#showAll').addEventListener('click', () => {
   hydrateReferenceThumbs(ITEMS);
 });
 
-// Voice search with graceful fallback.
+// Continuous voice lookup with graceful fallback.
+// One tap turns the mic mode on; it keeps listening/restarting until the user taps it off.
+// Some mobile browsers end a SpeechRecognition session after silence or when another media
+// surface opens, so "continuous" is implemented as a user-controlled mode plus safe auto-restart.
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-if (!SR) {
-  $('#voiceSearch').addEventListener('click', () => toast('Voice recognition is not supported in this browser. Type search still works.'));
-} else {
-  $('#voiceSearch').addEventListener('click', () => {
-    const btn = $('#voiceSearch');
-    const rec = new SR(); rec.lang = 'en-CA'; rec.interimResults = false; rec.maxAlternatives = 3;
-    rec.onstart = () => { btn.classList.add('listening'); toast('Listening… say a produce name or PLU'); };
-    rec.onresult = e => {
-      const alternatives = [...e.results[0]].map(x => x.transcript).filter(Boolean);
-      let best = alternatives[0] || '';
-      let bestScore = -Infinity;
-      for (const phrase of alternatives) {
-        const score = Math.max(...ITEMS.map(item => searchScore(item, phrase)));
-        if (score > bestScore) { bestScore = score; best = phrase; }
-      }
-      parseVoiceCommand(best);
-    };
-    rec.onerror = e => toast(e.error === 'not-allowed' ? 'Microphone permission denied' : 'Voice search unavailable');
-    rec.onend = () => btn.classList.remove('listening');
-    try { rec.start(); } catch { btn.classList.remove('listening'); }
-  });
+let voiceRecognition = null;
+let voiceWanted = false;
+let voiceRunning = false;
+let voiceRestartTimer = null;
+let voicePausedForCamera = false;
+let lastVoiceError = '';
+
+function updateVoiceButton() {
+  const btn = $('#voiceSearch');
+  if (!btn) return;
+  btn.classList.toggle('listening', voiceWanted);
+  btn.textContent = voiceWanted ? '⏹️' : '🎙️';
+  btn.setAttribute('aria-label', voiceWanted ? 'Turn off continuous voice lookup' : 'Turn on continuous voice lookup');
+  btn.title = voiceWanted ? 'Mic on — tap to stop' : 'Continuous voice lookup';
 }
+
+function rankVoiceAlternatives(result) {
+  const alternatives = [...result].map(x => x.transcript?.trim()).filter(Boolean);
+  let best = alternatives[0] || '';
+  let bestScore = -Infinity;
+  for (const phrase of alternatives) {
+    const score = Math.max(...ITEMS.map(item => searchScore(item, phrase)));
+    if (score > bestScore) { bestScore = score; best = phrase; }
+  }
+  return best;
+}
+
+function scheduleVoiceRestart(delay = 260) {
+  clearTimeout(voiceRestartTimer);
+  if (!voiceWanted || voicePausedForCamera || document.hidden) return;
+  voiceRestartTimer = setTimeout(() => startVoiceRecognition(), delay);
+}
+
+function makeVoiceRecognition() {
+  const rec = new SR();
+  rec.lang = 'en-CA';
+  rec.interimResults = false;
+  rec.continuous = true;
+  rec.maxAlternatives = 4;
+
+  rec.onstart = () => {
+    voiceRunning = true;
+    lastVoiceError = '';
+    updateVoiceButton();
+  };
+
+  rec.onresult = e => {
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const result = e.results[i];
+      if (!result.isFinal) continue;
+      const phrase = rankVoiceAlternatives(result);
+      if (phrase) parseVoiceCommand(phrase);
+    }
+  };
+
+  rec.onerror = e => {
+    voiceRunning = false;
+    lastVoiceError = e.error || '';
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+      voiceWanted = false;
+      updateVoiceButton();
+      toast('Microphone permission denied');
+      return;
+    }
+    // no-speech and aborted are normal during long sessions / camera transitions.
+    if (!['no-speech','aborted'].includes(e.error || '') && voiceWanted) {
+      toast('Voice paused — reconnecting…');
+    }
+  };
+
+  rec.onend = () => {
+    voiceRunning = false;
+    updateVoiceButton();
+    if (voiceWanted) scheduleVoiceRestart(lastVoiceError === 'network' ? 1200 : 280);
+  };
+  return rec;
+}
+
+function startVoiceRecognition() {
+  if (!SR || !voiceWanted || voiceRunning || voicePausedForCamera || document.hidden) return;
+  clearTimeout(voiceRestartTimer);
+  if (!voiceRecognition) voiceRecognition = makeVoiceRecognition();
+  try {
+    voiceRecognition.start();
+  } catch {
+    scheduleVoiceRestart(500);
+  }
+}
+
+function turnVoiceOn() {
+  if (!SR) {
+    toast('Voice recognition is not supported in this browser. Type search still works.');
+    return;
+  }
+  if (voiceWanted) return;
+  voiceWanted = true;
+  updateVoiceButton();
+  toast('Continuous mic ON — say produce names; tap ⏹️ to stop');
+  startVoiceRecognition();
+}
+
+function turnVoiceOff(showToast = true) {
+  voiceWanted = false;
+  voicePausedForCamera = false;
+  clearTimeout(voiceRestartTimer);
+  voiceRestartTimer = null;
+  try { voiceRecognition?.stop(); } catch {}
+  updateVoiceButton();
+  if (showToast) toast('Continuous mic OFF');
+}
+
+function pauseVoiceForCamera() {
+  if (!voiceWanted) return;
+  voicePausedForCamera = true;
+  clearTimeout(voiceRestartTimer);
+  try { voiceRecognition?.abort(); } catch {}
+}
+
+function resumeVoiceAfterCamera() {
+  if (!voiceWanted) return;
+  voicePausedForCamera = false;
+  scheduleVoiceRestart(220);
+}
+
+$('#voiceSearch').addEventListener('click', () => {
+  if (voiceWanted) turnVoiceOff();
+  else turnVoiceOn();
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && voiceWanted && !voicePausedForCamera) scheduleVoiceRestart(250);
+});
+updateVoiceButton();
 
 // Camera / barcode assist.
 async function openCameraDialog() { $('#cameraDialog').showModal(); $('#cameraStatus').textContent = ('BarcodeDetector' in window) ? 'Ready — start live scan' : 'Live barcode detection may be unavailable here; camera/photo fallback still works'; }
