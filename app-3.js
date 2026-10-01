@@ -5,6 +5,7 @@
 // Bags move OPEN -> READY -> LABELING -> DONE. New product found after a bag
 // is READY/LABELING/DONE gets a new OPEN bag automatically.
 const BAG_COUNTER_KEY = 'produce-cvp.bagCounter.v1';
+const PACKAGE_COUNTER_KEY = 'produce-cvp.packageCounter.v1';
 const LABEL_ROUND_KEY = 'produce-cvp.labelRound.v1';
 const BAG_STATUSES = ['open','ready','labeling','done','throw'];
 
@@ -14,12 +15,42 @@ function bagNumberFromId(id) {
 }
 
 function formatBagId(n) { return `A${String(n).padStart(2,'0')}`; }
+function formatPackageId(n) { return `P${String(n).padStart(2,'0')}`; }
 
 function nextBagId() {
   const maxExisting = Math.max(0, ...state.queue.map(q => bagNumberFromId(q.bagId)));
   let n = Math.max(Number(load(BAG_COUNTER_KEY, 0) || 0), maxExisting) + 1;
   save(BAG_COUNTER_KEY, n);
   return formatBagId(n);
+}
+
+function nextPackageId() {
+  const existing = state.queue
+    .map(q => String(q.bagId || '').match(/^P(\d+)$/i))
+    .filter(Boolean)
+    .map(m => Number(m[1]));
+  const maxExisting = Math.max(0, ...existing);
+  const n = Math.max(Number(load(PACKAGE_COUNTER_KEY, 0) || 0), maxExisting) + 1;
+  save(PACKAGE_COUNTER_KEY, n);
+  return formatPackageId(n);
+}
+
+function addPackagedUnit(id) {
+  const item = byId(id);
+  if (!item || item.type !== 'packaged') return null;
+  const unit = {
+    bagId: nextPackageId(),
+    id,
+    status: 'ready',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    round: null
+  };
+  state.queue.unshift(unit);
+  save(STORAGE.queue, state.queue);
+  renderQueue();
+  updateQueueCount();
+  return unit;
 }
 
 function migrateBagQueue() {
@@ -68,6 +99,7 @@ function bagStatusLabel(status) {
 function createOpenBag(id) {
   const item = byId(id);
   if (!item) return null;
+  if (item.type === 'packaged') return addPackagedUnit(id);
   const existing = openBagForItem(id);
   if (existing) return existing;
   const bag = {
@@ -168,29 +200,36 @@ function queueStatusCounts() {
 function bagCard(q) {
   const item = byId(q.id);
   if (!item) return '';
+  const packaged = item.type === 'packaged';
   let actions = '';
-  if (q.status === 'open') {
+  if (q.status === 'open' && !packaged) {
     actions = `
       <button class="mini-btn bag-full-btn" type="button">Bag full → new</button>
       <button class="mini-btn bag-ready-btn" type="button">Ready</button>`;
-  } else if (q.status === 'ready') {
+  } else if (q.status === 'ready' && !packaged) {
     actions = `<button class="mini-btn bag-reopen-btn" type="button">Reopen</button>`;
+  } else if (q.status === 'ready' && packaged) {
+    actions = `<span class="muted">One physical package</span>`;
   } else if (q.status === 'labeling') {
     actions = `<button class="mini-btn bag-done-btn" type="button">✓ Label done</button>`;
   } else if (q.status === 'done') {
     actions = `<button class="mini-btn bag-undo-btn" type="button">Undo to ready</button>`;
   }
 
-  return `<div class="queue-item bag-card status-${q.status}" data-bag-id="${esc(q.bagId)}">
+  const code = packaged ? item.barcode : item.plu;
+  const meta = packaged
+    ? `PACKAGE • UPC ${esc(item.barcode)}`
+    : `PLU ${esc(item.plu)} • ${item.unit === 'KG' ? 'WEIGHT • KG' : 'COUNT • EA'}`;
+  return `<div class="queue-item bag-card status-${q.status} ${packaged ? 'packaged-bag-card' : ''}" data-bag-id="${esc(q.bagId)}">
     <div class="bag-id-block">
       <span class="bag-id">${esc(q.bagId)}</span>
       <span class="bag-status status-${q.status}">${bagStatusLabel(q.status)}</span>
     </div>
     <div class="bag-main">
       <div class="queue-title">${item.emoji} ${esc(item.name)}</div>
-      <div class="alias-line">PLU ${esc(item.plu)} • ${item.unit === 'KG' ? 'WEIGHT • KG' : 'COUNT • EA'}${q.round ? ` • Round ${q.round}` : ''}</div>
+      <div class="alias-line">${meta}${q.round ? ` • Round ${q.round}` : ''}</div>
     </div>
-    <button class="queue-code-btn" data-copy="${esc(item.plu)}" type="button">${esc(item.plu)}</button>
+    <button class="queue-code-btn" data-copy="${esc(code)}" data-code-type="${packaged ? 'Barcode' : 'PLU'}" type="button">${esc(packaged ? item.barcode.slice(-6) : item.plu)}</button>
     <div class="bag-actions">${actions}<button class="mini-btn bag-remove-btn" type="button">Remove</button></div>
   </div>`;
 }
@@ -234,7 +273,7 @@ function renderQueue() {
   if ($('#closeOpenAndLabel')) $('#closeOpenAndLabel').disabled = !state.queue.some(x => ['open','ready','labeling'].includes(x.status));
   if ($('#copyQueueSummary')) $('#copyQueueSummary').disabled = !state.queue.length;
 
-  $$('.queue-code-btn', list).forEach(btn => btn.addEventListener('click', () => copyText(btn.dataset.copy, `PLU ${btn.dataset.copy} copied`)));
+  $('.queue-code-btn', list).forEach(btn => btn.addEventListener('click', () => copyText(btn.dataset.copy, `${btn.dataset.codeType || 'Code'} ${btn.dataset.copy} copied`)));
   $$('.bag-card', list).forEach(row => {
     const id = row.dataset.bagId;
     $('.bag-full-btn', row)?.addEventListener('click', () => markBagFullAndOpenNext(id));
@@ -266,7 +305,8 @@ function updateQueueCount() {
 function copyQueueSummary() {
   const lines = state.queue.map(q => {
     const item = byId(q.id); if (!item) return '';
-    return `${q.bagId} — ${bagStatusLabel(q.status)} — ${item.name} — PLU ${item.plu} — ${item.unit}`;
+    const code = item.type === 'packaged' ? `UPC ${item.barcode}` : `PLU ${item.plu} — ${item.unit}`;
+    return `${q.bagId} — ${bagStatusLabel(q.status)} — ${item.name} — ${code}`;
   }).filter(Boolean);
   copyText(lines.join('\n'), 'Bag list copied');
 }
@@ -353,14 +393,16 @@ function renderRapid() {
   state.rapidIndex = Math.min(state.rapidIndex, entries.length - 1);
   const entry = entries[state.rapidIndex];
   const item = byId(entry.q.id);
+  const packaged = item.type === 'packaged';
+  const code = packaged ? item.barcode : item.plu;
   $('#rapidContent').innerHTML = `
     <div class="rapid-topline"><span>${state.rapidIndex + 1} of ${entries.length} remaining</span><span>Round ${entry.q.round || '—'}</span></div>
     <div class="rapid-bag-id">${esc(entry.q.bagId)}</div>
     <h2 class="rapid-name">${item.emoji} ${esc(item.name)}</h2>
-    <div class="rapid-plu-label">PLU</div>
-    <div class="rapid-plu">${esc(item.plu)}</div>
-    <div class="rapid-unit">${item.unit === 'KG' ? 'WEIGHT • KG' : 'COUNT • EA'}</div>
-    <div class="rapid-qty">Weigh/count as needed → print label → attach label → tie bag.</div>
+    <div class="rapid-plu-label">${packaged ? 'PACKAGE BARCODE' : 'PLU'}</div>
+    <div class="rapid-plu ${packaged ? 'rapid-package-code' : ''}">${esc(code)}</div>
+    <div class="rapid-unit">${packaged ? 'PACKAGED • EA' : (item.unit === 'KG' ? 'WEIGHT • KG' : 'COUNT • EA')}</div>
+    <div class="rapid-qty">${packaged ? 'Use the barcode on the physical package → print/apply the label as required.' : 'Weigh/count as needed → print label → attach label → tie bag.'}</div>
     <div class="rapid-actions">
       <button id="rapidCopy" class="outline-btn" type="button">Copy PLU</button>
       <button id="rapidDoneNext" class="primary-btn" type="button">✓ Label done</button>
@@ -371,7 +413,7 @@ function renderRapid() {
       <button id="rapidNext" type="button">Next →</button>
     </div>`;
 
-  $('#rapidCopy').addEventListener('click', () => copyText(item.plu, `PLU ${item.plu} copied`));
+  $('#rapidCopy').addEventListener('click', () => copyText(code, `${packaged ? 'Barcode' : 'PLU'} ${code} copied`));
   $('#rapidDoneNext').addEventListener('click', () => {
     markBagDone(entry.q.bagId);
     state.rapidIndex = Math.min(state.rapidIndex, Math.max(0, currentLabelingEntries().length - 1));
@@ -437,7 +479,7 @@ function closeDetailForVoiceNavigation() {
 }
 
 function rankedVoiceMatches(query) {
-  return ITEMS
+  return CATALOG_ITEMS
     .map(item => ({ item, score: searchScore(item, query) }))
     .filter(x => x.score >= 0)
     .sort((a,b) => b.score - a.score || a.item.name.localeCompare(b.item.name));
@@ -515,6 +557,13 @@ function parseVoiceCommand(text) {
   if (/^(add it|add this|put it|put this|queue it|queue this)$/.test(n)) {
     const item = currentVoiceItem();
     if (!item) { toast('Open a produce item first'); return; }
+    if (item.type === 'packaged') {
+      const unit = addPackagedUnit(item.id);
+      closeDetailForVoiceNavigation();
+      haptic();
+      toast(`${unit.bagId} READY — ${item.name}`);
+      return;
+    }
     const bag = createOpenBag(item.id);
     closeDetailForVoiceNavigation();
     haptic();
@@ -526,10 +575,16 @@ function parseVoiceCommand(text) {
   if (addMatch) {
     const matches = rankedVoiceMatches(addMatch[2]).filter(x => x.score >= 560);
     if (matches.length === 1 || (matches[0] && (!matches[1] || matches[0].score > matches[1].score + 30))) {
-      const bag = createOpenBag(matches[0].item.id);
-      state.currentItemId = matches[0].item.id;
+      const matchedItem = matches[0].item;
+      state.currentItemId = matchedItem.id;
       closeDetailForVoiceNavigation();
-      toast(`${bag.bagId} OPEN — put ${matches[0].item.name} here`);
+      if (matchedItem.type === 'packaged') {
+        const unit = addPackagedUnit(matchedItem.id);
+        toast(`${unit.bagId} READY — ${matchedItem.name}`);
+      } else {
+        const bag = createOpenBag(matchedItem.id);
+        toast(`${bag.bagId} OPEN — put ${matchedItem.name} here`);
+      }
       return;
     }
   }
@@ -544,6 +599,7 @@ function parseVoiceCommand(text) {
     (matches.length === 1 && matches[0].score >= 560) ||
     (matches[0] && matches[0].score >= 850 && (!matches[1] || matches[0].score >= matches[1].score + 60))
   ) {
-    openDetail(matches[0].item);
+    if (matches[0].item.type === 'packaged') openPackagedDetail(matches[0].item);
+    else openDetail(matches[0].item);
   }
 }
