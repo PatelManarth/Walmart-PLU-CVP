@@ -37,7 +37,7 @@
             <button id="clearSearch" class="search-action hidden" type="button" aria-label="Clear search">×</button>
             <button id="voiceSearch" class="search-action" type="button" aria-label="Voice search" title="Voice search">🎙️</button>
           </div>
-          <div class="search-hint"><strong>Mic:</strong> tap 🎙️ once and it stays in continuous lookup mode until you tap ⏹️. Say items one after another — e.g. “carrot”, then “tomato”. You can also say “add it” after opening an item.</div>
+          <div class="search-hint"><strong>Mic:</strong> tap 🎙️ once for continuous mode. Say a product, then “add it”, “bag full”, “ready”, “throw it”, or “start label round”. Tap ⏹️ when finished.</div>
         </div>
 
         <div class="hero-card">
@@ -74,23 +74,27 @@
       <section id="queueView" class="view" aria-labelledby="queueTab">
         <div class="section-head queue-head">
           <div>
-            <h2>PLU queue</h2>
-            <p>Stage items before entering them on the handheld.</p>
+            <h2>Physical bags</h2>
+            <p>One exact product can have multiple physical bags. Keep one OPEN bag until it is full or ready.</p>
           </div>
-          <button id="clearCompleted" class="link-btn" type="button">Clear done</button>
+          <button id="clearCompleted" class="link-btn" type="button">Clear finished</button>
         </div>
 
-        <div class="queue-toolbar">
-          <button id="startRapidMode" class="primary-btn" type="button">⚡ Start rapid mode</button>
-          <button id="copyQueueSummary" class="outline-btn" type="button">Copy queue</button>
+        <div id="bagSummary" class="bag-summary" aria-label="Bag status summary"></div>
+
+        <div class="queue-toolbar bag-toolbar">
+          <button id="startRapidMode" class="primary-btn" type="button">🏷 Label ready bags</button>
+          <button id="closeOpenAndLabel" class="outline-btn" type="button">Close open + label all</button>
+          <button id="copyQueueSummary" class="outline-btn" type="button">Copy bag list</button>
         </div>
 
-        <div class="queue-tip">Tip: tap a PLU to copy it. Use Rapid mode for one-item-at-a-time processing with a giant PLU and Done + Next.</div>
+        <div class="queue-tip"><strong>Flow:</strong> OPEN accepts more of that exact product. If the physical bag fills, tap <strong>Bag full → new</strong>. READY waits for labeling. Starting a label round freezes ready bags as LABELING; newly found produce creates/uses a separate OPEN bag.</div>
+
         <div id="queueList" class="queue-list"></div>
         <div id="queueEmpty" class="empty">
-          <div class="empty-icon">🧺</div>
-          <h3>Your queue is empty</h3>
-          <p>From Lookup, add each bag/item as you identify it.</p>
+          <div class="empty-icon">🛍️</div>
+          <h3>No physical bags tracked yet</h3>
+          <p>Find an exact product in Lookup and start its first open bag.</p>
           <button class="primary-btn goto-lookup" type="button">Find produce</button>
         </div>
       </section>
@@ -160,7 +164,7 @@
 
     <nav class="bottom-nav" aria-label="Primary navigation">
       <button id="lookupTab" class="nav-item active" data-view="lookupView" type="button"><span>⌕</span><span>Lookup</span></button>
-      <button id="queueTab" class="nav-item" data-view="queueView" type="button"><span class="queue-icon-wrap">🧺<b id="queueCount" class="count-badge hidden">0</b></span><span>Queue</span></button>
+      <button id="queueTab" class="nav-item" data-view="queueView" type="button"><span class="queue-icon-wrap">🛍️<b id="queueCount" class="count-badge hidden">0</b></span><span>Bags</span></button>
       <button id="guideTab" class="nav-item" data-view="guideView" type="button"><span>◫</span><span>Guide</span></button>
     </nav>
   </div>
@@ -221,7 +225,7 @@
     <div class="about-content">
       <span class="kicker">About</span>
       <h2>Produce PLU Helper</h2>
-      <p>This is an independent personal lookup/prep tool. It is not affiliated with, endorsed by, sponsored by, or connected to any retailer. It does not connect to employer systems, handhelds, claims, pricing, inventory, or label printing.</p>
+      <p>This is an independent personal lookup and physical-bag staging helper. It is not affiliated with, endorsed by, sponsored by, or connected to any retailer. It does not connect to employer systems, handhelds, claims, pricing, inventory, or label printing.</p>
       <div id="dataVersion" class="data-version"></div>
       <p><strong>Important:</strong> this is a manually curated PLU reference. Some values may be retailer-assigned, local, outdated, or entered incorrectly. Verify unusual or conflicting codes against your current approved workplace source before operational use.</p>
       <p>Voice and camera features are progressive enhancements. Voice recognition and browser barcode detection are not supported equally by every browser, so normal typed search always remains the reliable fallback.</p>
