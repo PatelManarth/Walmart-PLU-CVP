@@ -65,8 +65,9 @@ $('#clearBarcodeMappings').addEventListener('click', () => {
 $('#mysteryCapture').addEventListener('change', e => setMysteryPhoto(e.target.files?.[0]));
 $('#cameraMysteryCapture').addEventListener('change', e => setMysteryPhoto(e.target.files?.[0]));
 $('#clearMysteryPhoto').addEventListener('click', () => { if (state.mysteryPhotoUrl) URL.revokeObjectURL(state.mysteryPhotoUrl); state.mysteryPhotoUrl=''; $('#mysteryPhotoPanel').classList.add('hidden'); });
-$('#clearCompleted').addEventListener('click', () => { state.queue = state.queue.filter(x => !x.done); save(STORAGE.queue, state.queue); renderQueue(); });
+$('#clearCompleted').addEventListener('click', () => { state.queue = state.queue.filter(x => !['done','throw'].includes(x.status)); save(STORAGE.queue, state.queue); renderQueue(); updateQueueCount(); });
 $('#startRapidMode').addEventListener('click', startRapidMode);
+$('#closeOpenAndLabel').addEventListener('click', closeOpenAndStartLabelRound);
 $('#copyQueueSummary').addEventListener('click', copyQueueSummary);
 $('[data-close-dialog]').addEventListener('click', () => $('#detailDialog').close());
 $('[data-close-camera]').addEventListener('click', () => { stopCamera(); $('#cameraDialog').close(); });
