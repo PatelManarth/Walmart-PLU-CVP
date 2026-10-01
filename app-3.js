@@ -30,18 +30,18 @@ function migrateBagQueue() {
   const migrated = [];
   for (const q of raw) {
     if (!q?.id || !byId(q.id)) continue;
-    const copies = Math.max(1, Math.min(20, Number(q.bags || 1)));
-    for (let i = 0; i < copies; i++) {
-      counter++;
-      migrated.push({
-        bagId: formatBagId(counter),
-        id: q.id,
-        status: q.done ? 'done' : (i === copies - 1 ? 'open' : 'ready'),
-        createdAt: Number(q.addedAt || Date.now()),
-        updatedAt: Date.now(),
-        round: null
-      });
-    }
+    // The previous app used "bags" as a repeat/add counter, not as verified
+    // physical bags. Migrate each old product row as ONE physical bag so we
+    // never invent extra bags from historical taps.
+    counter++;
+    migrated.push({
+      bagId: formatBagId(counter),
+      id: q.id,
+      status: q.done ? 'done' : 'open',
+      createdAt: Number(q.addedAt || Date.now()),
+      updatedAt: Date.now(),
+      round: null
+    });
   }
   state.queue = migrated;
   save(BAG_COUNTER_KEY, counter);
