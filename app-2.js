@@ -9,6 +9,11 @@ async function openDetail(item) {
   const fav = state.favorites.includes(item.id);
   const dupes = duplicatesFor(item);
   const localAliases = customAliases(item);
+  const displayAliases = [...new Set([...(item.aliases || []), ...localAliases])];
+  const languageGroups = multilingualGroups(item);
+  const languagePanel = Object.keys(languageGroups).length
+    ? `<div class="language-box"><strong>Other language names</strong><div class="language-grid">${Object.entries(languageGroups).map(([lang,names]) => `<div><span>${esc(I18N_LANG_LABELS[lang] || lang)}</span><strong>${esc((names || []).slice(0,3).join(' • '))}</strong></div>`).join('')}</div></div>`
+    : '';
   const photoUrl = await getReferencePhotoUrl(item.id);
   const openBag = typeof openBagForItem === 'function' ? openBagForItem(item.id) : null;
   const productBags = typeof bagsForItem === 'function' ? bagsForItem(item.id) : [];
@@ -49,7 +54,7 @@ async function openDetail(item) {
     <div class="detail-hero">
       <div class="detail-visual">${photoUrl ? `<img src="${photoUrl}" alt="Saved reference for ${esc(item.name)}">` : item.emoji}</div>
       <h2>${esc(item.name)}</h2>
-      <p class="detail-alias">${esc(allAliases(item).join(' • ') || 'Produce item')}</p>
+      <p class="detail-alias">${esc(displayAliases.join(' • ') || 'Produce item')}</p>
     </div>
     <div class="detail-body">
       <div class="big-code-row">
@@ -60,6 +65,7 @@ async function openDetail(item) {
       ${bagPanel}
       ${historyBits ? `<div class="bag-history-line"><strong>Other bags for this product:</strong> ${esc(historyBits)}</div>` : ''}
 
+      ${languagePanel}
       ${item.visual ? `<div class="visual-note"><strong>Visual clue:</strong> ${esc(item.visual)}</div>` : ''}
       ${dupes.length ? `<div class="duplicate-warning"><strong>Duplicate PLU in the reference:</strong> ${dupes.map(x => esc(x.name)).join(' • ')} also use ${esc(item.plu)}. Confirm the exact product before using the code.</div>` : ''}
 
@@ -163,6 +169,76 @@ async function openDetail(item) {
     openDetail(item);
     renderGuide();
     renderResults();
+  });
+
+  if (!$('#detailDialog').open) $('#detailDialog').showModal();
+}
+
+
+function openPackagedDetail(item, trackedUnit = null) {
+  if (!item || item.type !== 'packaged') return;
+  state.currentItemId = item.id;
+  pushRecent(item.id);
+
+  const existing = bagsForItem(item.id);
+  const ready = existing.filter(x => x.status === 'ready').length;
+  const labeling = existing.filter(x => x.status === 'labeling').length;
+  const done = existing.filter(x => x.status === 'done').length;
+
+  $('#detailContent').innerHTML = `
+    <div class="detail-hero packaged-detail-hero">
+      <div class="detail-visual">📦</div>
+      <h2>${esc(item.name)}</h2>
+      <p class="detail-alias">${esc(item.category || 'Packaged produce')}</p>
+    </div>
+    <div class="detail-body">
+      <div class="big-code-row package-code-row">
+        <div>
+          <div class="big-code-label">Package barcode / UPC</div>
+          <div class="package-code">${esc(item.barcode)}</div>
+        </div>
+        <div class="unit-big">PACKAGED</div>
+      </div>
+
+      ${trackedUnit ? `<div class="current-bag-box">
+        <div>
+          <span class="kicker">Scanned package added</span>
+          <div class="current-bag-id">${esc(trackedUnit.bagId)}</div>
+          <strong>READY FOR A LABEL ROUND</strong>
+          <p>This represents one physical packaged unit. Scan another identical package to add another unit.</p>
+        </div>
+      </div>` : ''}
+
+      <div class="package-note">
+        <strong>Exact barcode match only.</strong>
+        <p>The packaged catalog uses the UPC/GTIN printed on the package. Confirm the product name and size on the physical package before continuing.</p>
+      </div>
+
+      <div class="bag-history-line"><strong>Tracked this session:</strong> ${ready} ready • ${labeling} labeling • ${done} done</div>
+
+      <div class="detail-actions">
+        <button id="addPackagedUnit" class="primary-btn" type="button">+ Add 1 package</button>
+        <button id="copyPackageCode" class="outline-btn" type="button">Copy barcode</button>
+        <button id="markPackagedThrow" class="outline-btn danger-text" type="button">🗑 Throw</button>
+        <button id="gotoBagsFromPackage" class="outline-btn" type="button">View bags</button>
+      </div>
+    </div>`;
+
+  $('#addPackagedUnit').addEventListener('click', () => {
+    const unit = addPackagedUnit(item.id);
+    haptic();
+    toast(`${unit.bagId} READY — ${item.name}`);
+    openPackagedDetail(item, unit);
+  });
+  $('#copyPackageCode').addEventListener('click', () => copyText(item.barcode, `Barcode ${item.barcode} copied`));
+  $('#markPackagedThrow').addEventListener('click', () => {
+    markThrow(item.id);
+    haptic();
+    if ($('#detailDialog').open) $('#detailDialog').close();
+  });
+  $('#gotoBagsFromPackage').addEventListener('click', () => {
+    if ($('#detailDialog').open) $('#detailDialog').close();
+    switchView('queueView');
   });
 
   if (!$('#detailDialog').open) $('#detailDialog').showModal();
