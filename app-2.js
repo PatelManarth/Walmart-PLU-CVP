@@ -88,6 +88,7 @@ async function openDetail(item) {
       </div>
 
       <div class="detail-actions">
+        <button id="showPluBarcode" class="primary-btn" type="button">▦ Show barcode</button>
         <button id="copyCode" class="outline-btn" type="button">Copy PLU</button>
         <button id="markThrow" class="outline-btn danger-text" type="button">🗑 Throw</button>
         <button id="speakCode" class="outline-btn" type="button">🔊 Read code</button>
@@ -95,6 +96,9 @@ async function openDetail(item) {
       </div>
     </div>`;
 
+  $('#showPluBarcode').addEventListener('click', () => {
+    if (!window.BARCODE_UI?.show({ code: item.plu, kind: 'plu', title: item.name })) toast('Barcode display is still loading — try again');
+  });
   $('#copyCode').addEventListener('click', () => copyText(item.plu, `PLU ${item.plu} copied`));
 
   $('#confirmOpenBag')?.addEventListener('click', () => {
@@ -217,6 +221,7 @@ function openPackagedDetail(item, trackedUnit = null) {
       <div class="bag-history-line"><strong>Tracked this session:</strong> ${ready} ready • ${labeling} labeling • ${done} done</div>
 
       <div class="detail-actions">
+        <button id="showPackageBarcode" class="primary-btn" type="button">▦ Show barcode</button>
         <button id="addPackagedUnit" class="primary-btn" type="button">+ Add 1 package</button>
         <button id="copyPackageCode" class="outline-btn" type="button">Copy barcode</button>
         <button id="markPackagedThrow" class="outline-btn danger-text" type="button">🗑 Throw</button>
@@ -224,6 +229,9 @@ function openPackagedDetail(item, trackedUnit = null) {
       </div>
     </div>`;
 
+  $('#showPackageBarcode').addEventListener('click', () => {
+    if (!window.BARCODE_UI?.show({ code: item.barcode, kind: 'upc', title: item.name })) toast('Barcode display is still loading — try again');
+  });
   $('#addPackagedUnit').addEventListener('click', () => {
     const unit = addPackagedUnit(item.id);
     haptic();
