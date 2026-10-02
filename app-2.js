@@ -61,6 +61,7 @@ async function openDetail(item) {
         <div><div class="big-code-label">PLU code</div><div class="big-code">${esc(item.plu)}</div></div>
         <div class="unit-big">${item.unit === 'KG' ? 'WEIGHT • KG' : 'COUNT • EA'}</div>
       </div>
+      <div id="barcodeInlineSlot"></div>
 
       ${bagPanel}
       ${historyBits ? `<div class="bag-history-line"><strong>Other bags for this product:</strong> ${esc(historyBits)}</div>` : ''}
@@ -95,6 +96,11 @@ async function openDetail(item) {
         <button id="toggleFavorite" class="outline-btn" type="button">${fav ? '★ Saved' : '☆ Save'}</button>
       </div>
     </div>`;
+
+  if (window.BARCODE_UI?.inlineCard) {
+    $('#barcodeInlineSlot').innerHTML = window.BARCODE_UI.inlineCard({ code: item.plu, kind: 'plu' });
+    window.BARCODE_UI.bind($('#barcodeInlineSlot'));
+  }
 
   $('#showPluBarcode').addEventListener('click', () => {
     if (!window.BARCODE_UI?.show({ code: item.plu, kind: 'plu', title: item.name })) toast('Barcode display is still loading — try again');
@@ -203,6 +209,7 @@ function openPackagedDetail(item, trackedUnit = null) {
         </div>
         <div class="unit-big">PACKAGED</div>
       </div>
+      <div id="barcodeInlineSlot"></div>
 
       ${trackedUnit ? `<div class="current-bag-box">
         <div>
@@ -228,6 +235,11 @@ function openPackagedDetail(item, trackedUnit = null) {
         <button id="gotoBagsFromPackage" class="outline-btn" type="button">View bags</button>
       </div>
     </div>`;
+
+  if (window.BARCODE_UI?.inlineCard) {
+    $('#barcodeInlineSlot').innerHTML = window.BARCODE_UI.inlineCard({ code: item.barcode, kind: 'upc' });
+    window.BARCODE_UI.bind($('#barcodeInlineSlot'));
+  }
 
   $('#showPackageBarcode').addEventListener('click', () => {
     if (!window.BARCODE_UI?.show({ code: item.barcode, kind: 'upc', title: item.name })) toast('Barcode display is still loading — try again');
