@@ -273,7 +273,7 @@ function renderQueue() {
   if ($('#closeOpenAndLabel')) $('#closeOpenAndLabel').disabled = !state.queue.some(x => ['open','ready','labeling'].includes(x.status));
   if ($('#copyQueueSummary')) $('#copyQueueSummary').disabled = !state.queue.length;
 
-  $('.queue-code-btn', list).forEach(btn => btn.addEventListener('click', () => copyText(btn.dataset.copy, `${btn.dataset.codeType || 'Code'} ${btn.dataset.copy} copied`)));
+  $$('.queue-code-btn', list).forEach(btn => btn.addEventListener('click', () => copyText(btn.dataset.copy, `${btn.dataset.codeType || 'Code'} ${btn.dataset.copy} copied`)));
   $$('.bag-card', list).forEach(row => {
     const id = row.dataset.bagId;
     $('.bag-full-btn', row)?.addEventListener('click', () => markBagFullAndOpenNext(id));
