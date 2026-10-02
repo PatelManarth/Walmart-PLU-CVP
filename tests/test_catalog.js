@@ -88,7 +88,7 @@ for (let i = 1; i <= 6; i++) {
   const lines = source.split(/\r?\n/);
   const bad = lines
     .map((line, index) => ({line, number:index + 1}))
-    .filter(x => /(^|[^$])\$\([^\n]*\)\.forEach\s*\(/.test(x.line));
+    .filter(x => /(^|[^\w$])\$\([^)]*\)\.forEach\s*\(/.test(x.line));
   if (bad.length) {
     throw new Error(`Single-element selector used with forEach in app-${i}.js: ${bad.map(x => x.number).join(', ')}`);
   }
