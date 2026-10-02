@@ -81,32 +81,42 @@
     return `<svg class="display-barcode-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="UPC-A barcode ${esc(value)}" preserveAspectRatio="xMidYMid meet"><rect width="100%" height="100%" fill="white"/><g fill="black">${bars.join('')}</g></svg>`;
   }
 
-  function inlinePluCard(plu, compact = false) {
-    const barcode = code128Svg(plu, compact);
+  function inlineCard({ code, kind = 'plu', compact = false } = {}) {
+    const value = String(code || '').trim();
+    const isUpc = kind === 'upc';
+    const barcode = isUpc ? upcASvg(value) : code128Svg(value, compact);
     if (!barcode) return '';
     return `<div class="plu-barcode-card ${compact ? 'compact' : ''}">
-      <button class="plu-barcode-open" type="button" data-show-plu-barcode="${esc(plu)}" aria-label="Open larger barcode for PLU ${esc(plu)}">
-        <div class="plu-barcode-heading"><strong>Scan PLU ${esc(plu)}</strong><span>CODE 128</span></div>
+      <button class="plu-barcode-open" type="button" data-show-barcode-code="${esc(value)}" data-show-barcode-kind="${isUpc ? 'upc' : 'plu'}" aria-label="Open larger barcode">
+        <div class="plu-barcode-heading"><strong>${isUpc ? 'Package barcode' : `Scan PLU ${esc(value)}`}</strong><span>${isUpc ? 'UPC-A' : 'CODE 128'}</span></div>
         ${barcode}
-        <div class="plu-barcode-human">${esc(plu)}</div>
+        <div class="plu-barcode-human">${esc(value)}</div>
       </button>
-      ${compact ? '' : '<div class="plu-barcode-note">Tap the barcode for a larger popup. This encodes the PLU digits only; it is not a UPC.</div>'}
+      ${compact ? '' : `<div class="plu-barcode-note">Tap the barcode for a larger view. ${isUpc ? 'Confirm the package name/size before use.' : 'Encodes the PLU digits only; it is not a UPC.'}</div>`}
     </div>`;
   }
 
-  function ensureDialog() {
-    let dialog = document.getElementById('barcodeDisplayDialog');
-    if (dialog) return dialog;
-    dialog = document.createElement('dialog');
-    dialog.id = 'barcodeDisplayDialog';
-    dialog.className = 'barcode-display-dialog';
-    dialog.innerHTML = `
-      <button class="dialog-close barcode-display-close" type="button" aria-label="Close">×</button>
-      <div class="barcode-display-content" id="barcodeDisplayContent"></div>`;
-    document.body.appendChild(dialog);
-    dialog.querySelector('.barcode-display-close').addEventListener('click', () => dialog.close());
-    dialog.addEventListener('click', e => { if (e.target === dialog) dialog.close(); });
-    return dialog;
+  function ensureOverlay() {
+    let overlay = document.getElementById('barcodeDisplayOverlay');
+    if (overlay) return overlay;
+    overlay = document.createElement('div');
+    overlay.id = 'barcodeDisplayOverlay';
+    overlay.className = 'barcode-display-overlay hidden';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.innerHTML = `
+      <div class="barcode-display-sheet">
+        <button class="barcode-display-close" type="button" aria-label="Close barcode">×</button>
+        <div class="barcode-display-content" id="barcodeDisplayContent"></div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const close = () => {
+      overlay.classList.add('hidden');
+      document.body.classList.remove('barcode-overlay-open');
+    };
+    overlay.querySelector('.barcode-display-close').addEventListener('click', close);
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+    return overlay;
   }
 
   function show({ code, kind = 'plu', title = '' } = {}) {
@@ -118,8 +128,8 @@
       return false;
     }
 
-    const dialog = ensureDialog();
-    const content = dialog.querySelector('#barcodeDisplayContent');
+    const overlay = ensureOverlay();
+    const content = overlay.querySelector('#barcodeDisplayContent');
     content.innerHTML = `
       <span class="kicker">${isUpc ? 'Package barcode' : 'Loose produce PLU'}</span>
       <h2>${esc(title || (isUpc ? 'Package UPC' : `PLU ${value}`))}</h2>
@@ -129,15 +139,19 @@
       <p class="barcode-popup-note">${isUpc
         ? 'Exact UPC-A from the packaged-product catalog. Confirm the product name/size on the physical package.'
         : 'Encodes only the PLU digits. It is not a UPC or retailer-issued label. Test scanner acceptance with an approved handheld.'}</p>`;
-    if (!dialog.open) dialog.showModal();
+    overlay.classList.remove('hidden');
+    document.body.classList.add('barcode-overlay-open');
     return true;
   }
 
   function bindInlineBarcodeButtons(root = document) {
-    root.querySelectorAll('[data-show-plu-barcode]').forEach(btn => {
+    root.querySelectorAll('[data-show-barcode-code]').forEach(btn => {
       if (btn.dataset.barcodeBound === '1') return;
       btn.dataset.barcodeBound = '1';
-      btn.addEventListener('click', () => show({ code: btn.dataset.showPluBarcode, kind: 'plu' }));
+      btn.addEventListener('click', () => show({
+        code: btn.dataset.showBarcodeCode,
+        kind: btn.dataset.showBarcodeKind || 'plu'
+      }));
     });
   }
 
@@ -146,7 +160,7 @@
     const code = body?.querySelector('.big-code')?.textContent?.trim();
     const row = body?.querySelector('.big-code-row');
     if (!body || !row || !/^\d{4,5}$/.test(code || '')) return;
-    if (!body.querySelector('.plu-barcode-card')) row.insertAdjacentHTML('afterend', inlinePluCard(code, false));
+    if (!body.querySelector('.plu-barcode-card')) row.insertAdjacentHTML('afterend', inlineCard({ code, kind: 'plu', compact: false }));
     bindInlineBarcodeButtons(body);
   }
 
@@ -155,12 +169,14 @@
     const code = root?.querySelector('.rapid-plu')?.textContent?.trim();
     const unit = root?.querySelector('.rapid-unit');
     if (!root || !unit || !/^\d{4,5}$/.test(code || '')) return;
-    if (!root.querySelector('.plu-barcode-card')) unit.insertAdjacentHTML('afterend', inlinePluCard(code, true));
+    if (!root.querySelector('.plu-barcode-card')) unit.insertAdjacentHTML('afterend', inlineCard({ code, kind: 'plu', compact: true }));
     bindInlineBarcodeButtons(root);
   }
 
   window.BARCODE_UI = {
     show,
+    inlineCard,
+    bind: bindInlineBarcodeButtons,
     code128Svg,
     upcASvg,
     validUpcA,
@@ -179,9 +195,12 @@
     .rapid-content .plu-barcode-card{margin:18px 0 0;border-color:rgba(255,255,255,.2);padding:10px}
     .rapid-content .display-barcode-svg{height:62px}
     .rapid-content .plu-barcode-human{font-size:14px}
-    .barcode-display-dialog{width:min(94vw,620px);border:0;border-radius:22px;padding:0;box-shadow:0 30px 80px rgba(0,0,0,.32);overflow:hidden}
-    .barcode-display-dialog::backdrop{background:rgba(8,20,13,.62);backdrop-filter:blur(3px)}
+    .barcode-display-overlay{position:fixed;inset:0;z-index:9999;background:rgba(8,20,13,.68);backdrop-filter:blur(3px);display:grid;place-items:center;padding:14px}
+    .barcode-display-overlay.hidden{display:none!important}
+    .barcode-display-sheet{position:relative;width:min(94vw,620px);max-height:calc(100dvh - 28px);overflow:auto;border-radius:22px;background:#fff;box-shadow:0 30px 80px rgba(0,0,0,.34)}
+    .barcode-display-close{position:absolute;top:9px;right:9px;z-index:2;width:40px;height:40px;border:0;border-radius:999px;background:#f1f4f2;color:#17231c;font-size:26px;line-height:1;cursor:pointer}
     .barcode-display-content{padding:28px 20px 22px;text-align:center;background:#fff;color:#111}
+    body.barcode-overlay-open{overflow:hidden}
     .barcode-display-content h2{margin:5px 42px 10px;font-size:21px}
     .barcode-popup-label{display:inline-flex;margin-bottom:10px}
     .barcode-popup-graphic{background:#fff;border:1px solid #e1e7e3;border-radius:14px;padding:14px 8px}
