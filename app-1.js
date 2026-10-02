@@ -277,7 +277,7 @@ function renderFrequentStrip() {
   wrap.classList.toggle('hidden', items.length < 2 || !!state.query.trim());
   if (items.length < 2) return;
   wrap.innerHTML = `<div class="frequent-title">Your frequent items</div><div class="frequent-items">${items.map(item => `<button class="frequent-item" data-id="${item.id}" type="button">${item.emoji} ${esc(item.name)} · ${esc(item.type === "packaged" ? item.barcode.slice(-6) : item.plu)}</button>`).join('')}</div>`;
-  $('.frequent-item', wrap).forEach(btn => btn.addEventListener('click', () => { const item = byId(btn.dataset.id); if (item?.type === "packaged") openPackagedDetail(item); else openDetail(item); }));
+  $$('.frequent-item', wrap).forEach(btn => btn.addEventListener('click', () => { const item = byId(btn.dataset.id); if (item?.type === "packaged") openPackagedDetail(item); else openDetail(item); }));
 }
 
 function filteredItems() {
@@ -331,7 +331,7 @@ function renderResults() {
   $('#showAll').textContent = hasQuery ? 'Clear' : 'Show all';
   $('#results').innerHTML = items.map(resultCard).join('');
   $('#emptyState').classList.toggle('hidden', items.length !== 0);
-  $('.product-card').forEach(card => card.addEventListener('click', () => {
+  $$('.product-card').forEach(card => card.addEventListener('click', () => {
     const item = byId(card.dataset.id);
     if (item?.type === 'packaged') openPackagedDetail(item);
     else openDetail(item);
