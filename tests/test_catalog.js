@@ -81,3 +81,16 @@ for (const p of packages) {
 }
 
 console.log(`OK: ${packages.length} packaged UPCs and ${window.PRODUCE_I18N_RULES.length} multilingual rules validated`);
+
+
+for (let i = 1; i <= 6; i++) {
+  const source = fs.readFileSync(`app-${i}.js`, 'utf8');
+  const lines = source.split(/\r?\n/);
+  const bad = lines
+    .map((line, index) => ({line, number:index + 1}))
+    .filter(x => /(^|[^$])\$\([^\n]*\)\.forEach\s*\(/.test(x.line));
+  if (bad.length) {
+    throw new Error(`Single-element selector used with forEach in app-${i}.js: ${bad.map(x => x.number).join(', ')}`);
+  }
+}
+console.log('OK: selector usage validation passed');
