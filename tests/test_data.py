@@ -26,6 +26,11 @@ assert yucca[0]["unit"] == "KG"
 assert "cassava" in yucca[0]["aliases"]
 assert any(x["plu"] == "0434" and x["name"] == "PUMPKIN, CUT" for x in items)
 assert any(x["plu"] == "0222" and x["name"] == "YELLOW TURMERIC" for x in items)
+gray_zucchini = [x for x in items if x["plu"] == "4785"]
+assert len(gray_zucchini) == 1
+assert gray_zucchini[0]["name"] == "GRAY ZUCCHINI"
+assert gray_zucchini[0]["unit"] == "KG"
+assert "grey squash" in gray_zucchini[0]["aliases"]
 print("OK: dataset validation passed")
 
 barcode_text = (ROOT / "data" / "barcodes.js").read_text(encoding="utf-8")
